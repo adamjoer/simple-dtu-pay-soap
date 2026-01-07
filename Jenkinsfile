@@ -46,11 +46,11 @@ pipeline {
                 }
             }
             post {
-                always {
-                    sh "docker rm -f ${CONTAINER_NAME} || true"
-                }
                 failure {
                     sh "docker logs ${CONTAINER_NAME} || true"
+                }
+                always {
+                    sh "docker rm -f ${CONTAINER_NAME} || true"
                 }
             }
         }
