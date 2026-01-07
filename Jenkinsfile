@@ -32,11 +32,11 @@ pipeline {
                 timeout(time: 60, unit: 'SECONDS') {
                     waitUntil {
                         script {
-                            def response = sh(
-                                script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:${PORT}/q/health/ready",
-                                returnStdout: true
+                            def exitCode = sh(
+                                script: "curl --silent --fail http://localhost:${PORT}/q/health/ready",
+                                returnStatus: true
                             ).trim()
-                            return response == '200'
+                            return exitCode == 0
                         }
                     }
                 }
@@ -49,7 +49,7 @@ pipeline {
                 failure {
                     sh "docker logs ${CONTAINER_NAME} || true"
                 }
-                always {
+                cleanup {
                     sh "docker rm -f ${CONTAINER_NAME} || true"
                 }
             }
