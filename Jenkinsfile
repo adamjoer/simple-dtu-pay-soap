@@ -9,6 +9,7 @@ pipeline {
         DOCKERFILE = "${SERVICE_DIR}/src/main/docker/Dockerfile.jvm"
         TEST_PORT = '8080'
         PROD_PORT = '80'
+        SIMPLE_DTU_PAY_API_KEY = credentials('SIMPLE_DTU_PAY_API_KEY')
     }
 
     options {
@@ -28,7 +29,7 @@ pipeline {
 
         stage('Test') {
             steps {
-                sh "docker run -d --name ${CONTAINER_NAME} -p ${TEST_PORT}:8080 ${IMAGE_NAME}:${BUILD_NUMBER}"
+                sh "docker run -d --name ${CONTAINER_NAME} -p ${TEST_PORT}:8080 -e SIMPLE_DTU_PAY_API_KEY=${SIMPLE_DTU_PAY_API_KEY} ${IMAGE_NAME}:${BUILD_NUMBER}"
 
                 timeout(time: 60, unit: 'SECONDS') {
                     waitUntil {
@@ -61,7 +62,7 @@ pipeline {
                 sh "docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest"
 
                 sh "docker rm -f ${CONTAINER_NAME}-prod || true"
-                sh "docker run -d --name ${CONTAINER_NAME}-prod -p ${PROD_PORT}:8080 ${IMAGE_NAME}:latest"
+                sh "docker run -d --name ${CONTAINER_NAME}-prod -p ${PROD_PORT}:8080 -e SIMPLE_DTU_PAY_API_KEY=${SIMPLE_DTU_PAY_API_KEY} ${IMAGE_NAME}:latest"
             }
         }
     }
