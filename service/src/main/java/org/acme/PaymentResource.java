@@ -6,6 +6,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.acme.exceptions.DTUPayException;
+import org.acme.exceptions.PaymentException;
 import org.acme.record.Customer;
 import org.acme.record.Merchant;
 import org.acme.record.PaymentRequest;
@@ -105,6 +106,8 @@ public class PaymentResource {
                     new BigDecimal(paymentRequest.amount())
             );
             return Response.ok().entity(paymentId.toString()).build();
+        } catch (PaymentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (DTUPayException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         } catch (NullPointerException e) {

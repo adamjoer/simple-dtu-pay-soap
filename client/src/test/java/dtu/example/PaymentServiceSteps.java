@@ -76,7 +76,7 @@ public class PaymentServiceSteps {
 
     @Given("the customer is registered with Simple DTU Pay using their bank account")
     public void theCustomerIsRegisteredWithSimpleDTUPayUsingTheirBankAccount() throws BankServiceException_Exception {
-         customerId = payService.register(customer);
+        customerId = payService.register(customer);
     }
 
     @Given("a merchant with name {string}, last name {string}, and CPR {string}")
@@ -86,7 +86,7 @@ public class PaymentServiceSteps {
     }
 
     @Given("the merchant is registered with the bank with an initial balance of {double} kr")
-    public void theMerchantIsRegisteredWithTheBankWithAnInitialBalanceOfKr(Double amount) throws Exception{
+    public void theMerchantIsRegisteredWithTheBankWithAnInitialBalanceOfKr(Double amount) throws Exception {
         // Write code here that turns the phrase above into concrete actions
         var bankId = registerAccount(merchant.firstName, merchant.lastName, merchant.cprNumber, amount);
         merchant.bankId = bankId;
@@ -113,16 +113,22 @@ public class PaymentServiceSteps {
     }
 
     @Then("the balance of the customer at the bank is {double} kr")
-    public void theBalanceOfTheCustomerAtTheBankIsKr(Double amount) throws Exception{
-        var amountBigDecimal = BigDecimal.valueOf(amount);
-        var balance = bank.getAccount(customer.bankId).getBalance();
-        Assert.assertEquals(amountBigDecimal, balance);
+    public void theBalanceOfTheCustomerAtTheBankIsKr(Double amount) throws Exception {
+        BigDecimal amountBigDecimal = BigDecimal.valueOf(amount);
+        BigDecimal balance = bank.getAccount(customer.bankId).getBalance();
+        Assert.assertEquals(
+                "Expected balance " + amountBigDecimal + " but was " + balance,
+                0, amountBigDecimal.compareTo(balance)
+        );
     }
 
     @Then("the balance of the merchant at the bank is {double} kr")
-    public void theBalanceOfTheMerchantAtTheBankIsKr(Double amount) throws Exception{
-        var amountBigDecimal = BigDecimal.valueOf(amount);
-        var balance = bank.getAccount(merchant.bankId).getBalance();
-        Assert.assertEquals(amountBigDecimal, balance);
+    public void theBalanceOfTheMerchantAtTheBankIsKr(Double amount) throws Exception {
+        BigDecimal amountBigDecimal = BigDecimal.valueOf(amount);
+        BigDecimal balance = bank.getAccount(merchant.bankId).getBalance();
+        Assert.assertEquals(
+                "Expected balance " + amountBigDecimal + " but was " + balance,
+                0, amountBigDecimal.compareTo(balance)
+        );
     }
 }
