@@ -14,7 +14,7 @@ import org.acme.service.DTUPayService;
 
 import java.math.BigDecimal;
 
-@Path("/pay")
+@Path("/")
 public class PaymentResource {
 
     private final DTUPayService payService;

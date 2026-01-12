@@ -24,7 +24,7 @@ public class DTUPayService {
 
     public String register(Customer customer) {
         try (var client = ClientBuilder.newClient()) {
-            try (var response = client.target(baseUrl).path("pay/customers").request().post(Entity.json(customer))) {
+            try (var response = client.target(baseUrl).path("customers").request().post(Entity.json(customer))) {
                 return response.readEntity(String.class);
             }
         }
@@ -32,13 +32,13 @@ public class DTUPayService {
 
     public void unregisterCustomer(String customerId) {
         try (var client = ClientBuilder.newClient()) {
-            client.target(baseUrl).path("pay/customers").path(customerId).request().delete();
+            client.target(baseUrl).path("customers").path(customerId).request().delete();
         }
     }
 
     public String register(Merchant merchant) {
         try (var client = ClientBuilder.newClient()) {
-            try (var response = client.target(baseUrl).path("pay/merchants").request().post(Entity.json(merchant))) {
+            try (var response = client.target(baseUrl).path("merchants").request().post(Entity.json(merchant))) {
                 return response.readEntity(String.class);
             }
         }
@@ -46,14 +46,14 @@ public class DTUPayService {
 
     public void unregisterMerchant(String merchantId) {
         try (var client = ClientBuilder.newClient()) {
-            client.target(baseUrl).path("pay/merchants").path(merchantId).request().delete();
+            client.target(baseUrl).path("merchants").path(merchantId).request().delete();
         }
     }
 
     public boolean pay(String amount, String customerId, String merchantId) {
         try (var client = ClientBuilder.newClient()) {
             var paymentRequest = new PaymentRequest(customerId, merchantId, amount);
-            try (var response = client.target(baseUrl).path("pay/payments").request().post(Entity.json(paymentRequest))) {
+            try (var response = client.target(baseUrl).path("payments").request().post(Entity.json(paymentRequest))) {
                 if (response.getStatus() != 200) {
                     throw new RuntimeException(response.readEntity(String.class));
                 } else {
@@ -65,7 +65,7 @@ public class DTUPayService {
 
     public Collection<Payment> getAllPayments() {
         try (var client = ClientBuilder.newClient()) {
-            try (var response = client.target(baseUrl).path("pay/payments").request().get()) {
+            try (var response = client.target(baseUrl).path("payments").request().get()) {
                 return response.readEntity(new GenericType<>() {
                 });
             }
