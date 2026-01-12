@@ -102,6 +102,8 @@ public class PaymentServiceSteps {
             successful = false;
             errorMessage = e.getMessage();
         }
+
+        Assert.fail();
     }
 
     @Then("the payment is successful")
