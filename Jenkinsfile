@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'code-with-quarkus-jvm'
-        CONTAINER_NAME = 'code-with-quarkus-test'
+        IMAGE_NAME = 'dtu-pay-jvm'
+        CONTAINER_NAME = 'dtu-pay'
         SERVICE_DIR = 'service'
         CLIENT_DIR = 'client'
         DOCKERFILE = "${SERVICE_DIR}/src/main/docker/Dockerfile.jvm"
