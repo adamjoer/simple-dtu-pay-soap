@@ -1,9 +1,9 @@
 version: "3.9"
 
 services:
-  rabbitMq:
+  rabbit-mq:
     image: rabbitmq:management
-    container_name: rabbitMq_container
+    container_name: rabbit-mq-container
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -14,32 +14,28 @@ services:
       retries: 30
 
   user-service:
-    build:
-      context: ../user-service
-      dockerfile: src/main/docker/Dockerfile.jvm
-    container_name: user-service
+    image: user-service
+    container_name: user-service-container
     depends_on:
-      rabbitMq:
+      rabbit-mq:
         condition: service_healthy
 
   payment-service:
-    build:
-      context: ../payment-service
-      dockerfile: src/main/docker/Dockerfile.jvm
-    container_name: payment-service
+    image: payment-service
+    container_name: payment-service-container
     depends_on:
-      rabbitMq:
+      rabbit-mq:
         condition: service_healthy
+      user-service:
+        condition: service_started
 
   facade:
-    build:
-      context: ../facade
-      dockerfile: src/main/docker/Dockerfile.jvm
-    container_name: facade
+    image: facade-service
+    container_name: facade-service-container
     ports:
       - "8080:8080"   # end-to-end tests call http://localhost:8080
     depends_on:
-      rabbitMq:
+      rabbit-mq:
         condition: service_healthy
       user-service:
         condition: service_started

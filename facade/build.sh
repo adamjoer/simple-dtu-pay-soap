@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -euxo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$ROOT_DIR"
-
-./mvnw -pl facade -am clean test
-./mvnw -pl facade -am package -DskipTests
-
-docker compose -f docker-compose.yml build facade
-
-
+mvn clean package
+docker build -f Dockerfile -t facade-service .

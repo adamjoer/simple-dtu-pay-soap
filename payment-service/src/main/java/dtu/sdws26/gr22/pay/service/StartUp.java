@@ -8,7 +8,7 @@ public class StartUp {
     }
 
     private void startUp() throws Exception {
-        var queue = new RabbitMqQueue("rabbitMq");
+        var queue = new RabbitMqQueue("rabbit-mq");
         new PaymentService(queue);
     }
 }

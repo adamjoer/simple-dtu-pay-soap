@@ -3,7 +3,6 @@ package dtu.sdws26.gr22.pay.service;
 import dtu.sdws26.gr22.pay.service.exceptions.DTUPayException;
 import dtu.sdws26.gr22.pay.service.record.Customer;
 import dtu.sdws26.gr22.pay.service.service.CustomerService;
-import dtu.sdws26.gr22.pay.service.service.CustomerServiceSingleton;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -11,7 +10,12 @@ import jakarta.ws.rs.core.MediaType;
 @Path("/customers")
 public class CustomerResource {
 
-    public final CustomerService customerService = CustomerServiceSingleton.getInstance();
+    public final CustomerService customerService;
+
+    @Inject
+    public CustomerResource(CustomerService customerService) {
+        this.customerService = customerService;
+    }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)

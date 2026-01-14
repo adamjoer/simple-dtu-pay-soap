@@ -1,5 +1,7 @@
 package dtu.sdws26.gr22.pay.service.service;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import messaging.MessageQueue;
 import messaging.implementations.RabbitMqQueue;
 

@@ -3,4 +3,4 @@ set -euxo pipefail
 
 mvn clean package
 
-docker build -f Dockerfile -t payment-service .
+docker build -f Dockerfile -t user-service .

@@ -2,24 +2,23 @@ package dtu.sdws26.gr22.pay.service;
 
 
 import dtu.sdws26.gr22.pay.service.record.Payment;
-import dtu.sdws26.gr22.pay.service.service.PaymentServiceSingleton;
 import jakarta.inject.Inject;
-import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import dtu.sdws26.gr22.pay.service.exceptions.DTUPayException;
-import dtu.sdws26.gr22.pay.service.exceptions.PaymentException;
 import dtu.sdws26.gr22.pay.service.record.PaymentRequest;
 import dtu.sdws26.gr22.pay.service.service.PaymentService;
 
-import java.math.BigDecimal;
 import java.util.Collection;
 
 @Path("/payments")
 public class PaymentResource {
 
-    private final PaymentService payService = PaymentServiceSingleton.getInstance();
+    private final PaymentService payService;
+
+    @Inject
+    public PaymentResource(PaymentService payService) {
+        this.payService = payService;
+    }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)

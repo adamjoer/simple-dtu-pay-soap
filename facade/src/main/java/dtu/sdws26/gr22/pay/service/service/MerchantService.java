@@ -2,6 +2,7 @@ package dtu.sdws26.gr22.pay.service.service;
 
 import dtu.sdws26.gr22.pay.service.record.Merchant;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
@@ -13,12 +14,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ApplicationScoped
-public final class MerchantService extends  QueueCommunicatingService {
+public final class MerchantService {
 
     private final Map<UUID, CompletableFuture<Merchant>> merchantsInProgress = new ConcurrentHashMap<>();
 
+    private final MessageQueue queue;
+
+
+    @Inject
     public MerchantService(MessageQueue queue) {
-        super(queue);
+        this.queue = queue;
         queue.addHandler(TopicNames.MERCHANT_REGISTRATION_COMPLETED, this::handleMerchantRegistrationCompleted);
         queue.addHandler(TopicNames.MERCHANT_INFO_PROVIDED, this::handleMerchantInfoProvided);
     }

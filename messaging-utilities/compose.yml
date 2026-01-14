@@ -1,7 +1,7 @@
 services:
-  rabbitMq:
+  rabbit-mq:
     image: rabbitmq:management
-    container_name: rabbitMq_container
+    container_name: rabbit-mq-container
     ports:
      - "5672:5672"
      - "15672:15672"
