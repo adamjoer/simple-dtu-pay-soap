@@ -14,8 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ApplicationScoped
-public class PaymentService {
-    private final MessageQueue queue;
+public final class PaymentService extends QueueCommunicatingService {
 
     private final Map<UUID, CompletableFuture<Payment>> paymentInProgress = new ConcurrentHashMap<>();
     private final Map<UUID, CompletableFuture<Payment>> transactionInProgress = new ConcurrentHashMap<>();
@@ -23,10 +22,10 @@ public class PaymentService {
 
     @Inject
     public PaymentService(MessageQueue queue) {
-        this.queue = queue;
-        this.queue.addHandler(TopicNames.PAYMENT_CREATED, this::handlePaymentCreated);
-        this.queue.addHandler(TopicNames.TRANSACTION_PROVIDED, this::handleTransactionProvided);
-        this.queue.addHandler(TopicNames.TRANSACTION_ALL_HISTORY_PROVIDED, this::handleAllHistoryProvided);
+        super(queue);
+        queue.addHandler(TopicNames.PAYMENT_CREATED, this::handlePaymentCreated);
+        queue.addHandler(TopicNames.TRANSACTION_PROVIDED, this::handleTransactionProvided);
+        queue.addHandler(TopicNames.TRANSACTION_ALL_HISTORY_PROVIDED, this::handleAllHistoryProvided);
     }
 
     public Payment createPayment(PaymentRequest paymentRequest) {

@@ -13,15 +13,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ApplicationScoped
-public class CustomerService {
+public final class CustomerService extends QueueCommunicatingService {
     private final Map<UUID, CompletableFuture<Customer>> customersInProgress = new ConcurrentHashMap<>();
 
-    private final MessageQueue queue;
-
     public CustomerService(MessageQueue queue) {
-        this.queue = queue;
-        this.queue.addHandler(TopicNames.CUSTOMER_REGISTRATION_COMPLETED, this::handleCustomerRegistrationCompleted);
-        this.queue.addHandler(TopicNames.CUSTOMER_INFO_PROVIDED, this::handleCustomerInfoProvided);
+        super(queue);
+        queue.addHandler(TopicNames.CUSTOMER_REGISTRATION_COMPLETED, this::handleCustomerRegistrationCompleted);
+        queue.addHandler(TopicNames.CUSTOMER_INFO_PROVIDED, this::handleCustomerInfoProvided);
     }
 
     public Customer register(Customer customer) {

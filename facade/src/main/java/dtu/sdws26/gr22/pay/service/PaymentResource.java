@@ -2,6 +2,7 @@ package dtu.sdws26.gr22.pay.service;
 
 
 import dtu.sdws26.gr22.pay.service.record.Payment;
+import dtu.sdws26.gr22.pay.service.service.PaymentServiceSingleton;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -18,12 +19,7 @@ import java.util.Collection;
 @Path("/payments")
 public class PaymentResource {
 
-    private final PaymentService payService;
-
-    @Inject
-    public PaymentResource(PaymentService payService) {
-        this.payService = payService;
-    }
+    private final PaymentService payService = PaymentServiceSingleton.getInstance();
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)

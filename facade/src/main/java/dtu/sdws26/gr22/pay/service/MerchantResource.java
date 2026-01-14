@@ -3,6 +3,7 @@ package dtu.sdws26.gr22.pay.service;
 import dtu.sdws26.gr22.pay.service.exceptions.DTUPayException;
 import dtu.sdws26.gr22.pay.service.record.Merchant;
 import dtu.sdws26.gr22.pay.service.service.MerchantService;
+import dtu.sdws26.gr22.pay.service.service.MerchantServiceSingleton;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -10,12 +11,7 @@ import jakarta.ws.rs.core.MediaType;
 @Path("/merchants")
 public class MerchantResource {
 
-    private final MerchantService merchantService;
-
-    @Inject
-    public MerchantResource(MerchantService merchantService) {
-        this.merchantService = merchantService;
-    }
+    private final MerchantService merchantService = MerchantServiceSingleton.getInstance();
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
