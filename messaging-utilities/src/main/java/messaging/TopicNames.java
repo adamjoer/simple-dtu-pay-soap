@@ -43,4 +43,10 @@ public class TopicNames {
 
     public static final String CUSTOMER_TOKEN_REPLENISH_REQUESTED = "CustomerTokenReplenishRequested";
     public static final String CUSTOMER_TOKEN_REPLENISH_COMPLETED = "CustomerTokenReplenishCompleted";
+
+    public static final String TOKEN_VALIDATION_REQUESTED = "TokenValidationRequested";
+    public static final String TOKEN_VALIDATION_PROVIDED = "TokenValidationProvided";
+
+    public static final String TOKEN_MARK_USED_REQUESTED = "TokenMarkUsedRequested";
+    public static final String TOKEN_MARK_USED_COMPLETED = "TokenMarkUsedCompleted";
 }

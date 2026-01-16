@@ -40,4 +40,31 @@ public class CustomerResource {
             throw new NotFoundException(e.getMessage());
         }
     }
+
+    @GET
+    @Path("/{id}/tokens")
+    @Produces(MediaType.APPLICATION_JSON)
+    public java.util.List<String> getTokens(@PathParam("id") String id) {
+        try {
+            return customerService.getTokens(id);
+        } catch (Exception e) {
+            throw new NotFoundException("Failed to get tokens: " + e.getMessage());
+        }
+    }
+
+    @POST
+    @Path("/{id}/tokens")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public java.util.List<String> requestTokens(@PathParam("id") String id, dtu.sdws26.gr22.pay.service.record.TokenRequest tokenRequest) {
+        try {
+            // Ensure the customerId in the request matches the path parameter
+            if (!tokenRequest.customerId().equals(id)) {
+                throw new BadRequestException("Customer ID in path does not match request body");
+            }
+            return customerService.requestTokens(id, tokenRequest.numberOfTokens());
+        } catch (RuntimeException e) {
+            throw new BadRequestException("Failed to request tokens: " + e.getMessage());
+        }
+    }
 }

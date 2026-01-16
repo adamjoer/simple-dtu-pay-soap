@@ -12,6 +12,7 @@
         <module>messaging-utilities</module>
         <module>payment-service</module>
         <module>user-service</module>
+        <module>token-service</module>
         <module>facade</module>
     </modules>
 </project>

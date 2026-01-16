@@ -28,6 +28,7 @@ public class PaymentService {
 
     private final Map<UUID, PaymentInfo> pendingPaymentInfo = new ConcurrentHashMap<>();
     private final Map<UUID, PaymentRequest> pendingPaymentRequests = new ConcurrentHashMap<>();
+    private final Map<UUID, Boolean> pendingTokenValidations = new ConcurrentHashMap<>();
 
     private final MessageQueue queue;
 
@@ -35,6 +36,7 @@ public class PaymentService {
         this.queue = queue;
         this.queue.addHandler(TopicNames.PAYMENT_REQUESTED, this::handlePaymentRequested);
         this.queue.addHandler(TopicNames.PAYMENT_INFO_PROVIDED, this::handlePaymentInfoProvided);
+        this.queue.addHandler(TopicNames.TOKEN_VALIDATION_PROVIDED, this::handleTokenValidationProvided);
         this.queue.addHandler(TopicNames.TRANSACTION_REQUESTED, this::handleTransactionRequested);
         this.queue.addHandler(TopicNames.TRANSACTION_ALL_HISTORY_REQUESTED, this::handleAllTransactionsRequested);
         this.queue.addHandler(TopicNames.TRANSACTION_CUSTOMER_HISTORY_REQUESTED, this::handleAllTransactionsRequestedCustomer);
@@ -46,6 +48,21 @@ public class PaymentService {
         var correlationId = event.getArgument(1, UUID.class);
 
         pendingPaymentRequests.put(correlationId, paymentRequest);
+        
+        // Validate token before processing payment
+        if (paymentRequest.token() != null && !paymentRequest.token().isEmpty()) {
+            var validationRequest = new dtu.sdws26.gr22.pay.service.record.TokenValidationRequest(
+                paymentRequest.token(), 
+                paymentRequest.customerId()
+            );
+            var validationEvent = new Event(TopicNames.TOKEN_VALIDATION_REQUESTED, validationRequest, correlationId);
+            queue.publish(validationEvent);
+        } else {
+            // No token provided - invalid payment request
+            System.err.println("handlePaymentRequested: No token provided in payment request");
+            pendingTokenValidations.put(correlationId, false);
+        }
+        
         tryCompletePayment(correlationId);
     }
 
@@ -62,18 +79,35 @@ public class PaymentService {
     private void tryCompletePayment(UUID correlationId) {
         var request = pendingPaymentRequests.get(correlationId);
         var info = pendingPaymentInfo.get(correlationId);
-        if (request == null || info == null) {
+        var tokenValid = pendingTokenValidations.get(correlationId);
+        
+        if (request == null || info == null || tokenValid == null) {
             return;
         }
 
-        doPayment(info.customer(), info.merchant(), request.amount(), correlationId);
+        if (!tokenValid) {
+            System.err.println("tryCompletePayment: Token validation failed for payment request");
+            // Could publish a payment failed event here
+            return;
+        }
+
+        doPayment(info.customer(), info.merchant(), request.amount(), request.token(), correlationId);
 
         // Clean up
         // pendingPaymentRequests.remove(correlationId);
         // pendingPaymentInfo.remove(correlationId);
+        // pendingTokenValidations.remove(correlationId);
     }
 
-    private void doPayment(Customer customer, Merchant merchant, String amount, UUID correlationId) {
+    private void handleTokenValidationProvided(Event event) {
+        var isValid = event.getArgument(0, Boolean.class);
+        var correlationId = event.getArgument(1, UUID.class);
+        
+        pendingTokenValidations.put(correlationId, isValid);
+        tryCompletePayment(correlationId);
+    }
+
+    private void doPayment(Customer customer, Merchant merchant, String amount, String token, UUID correlationId) {
         var amountBigDecimal = new BigDecimal(amount);
         try {
             bankService.transferMoneyFromTo(customer.bankId(),
@@ -88,6 +122,12 @@ public class PaymentService {
         var paymentId = UUID.randomUUID();
         var payment = new Payment(paymentId, customer, merchant, amountBigDecimal, Instant.now());
         payments.put(paymentId, payment);
+
+        // Mark token as used after successful payment
+        if (token != null && !token.isEmpty()) {
+            var markUsedEvent = new Event(TopicNames.TOKEN_MARK_USED_REQUESTED, token, correlationId);
+            queue.publish(markUsedEvent);
+        }
 
         Event paymentCreatedEvent = new Event(TopicNames.PAYMENT_CREATED, payment, correlationId);
         queue.publish(paymentCreatedEvent);

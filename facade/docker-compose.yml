@@ -29,6 +29,15 @@ services:
       rabbit-mq:
         condition: service_healthy
 
+  token-service:
+    build:
+      context: ../token-service
+      dockerfile: Dockerfile
+    container_name: token-service
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+
   facade:
     build:
       context: .
@@ -42,4 +51,6 @@ services:
       user-service:
         condition: service_started
       payment-service:
+        condition: service_started
+      token-service:
         condition: service_started
