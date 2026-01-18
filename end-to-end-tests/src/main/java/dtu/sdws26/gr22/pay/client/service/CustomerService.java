@@ -15,17 +15,17 @@ public class CustomerService {
         this.baseUrl = baseUrl;
     }
 
-    public String register(Customer customer) {
+    public Customer register(Customer customer) {
         try (var client = ClientBuilder.newClient()) {
             try (var response = client.target(baseUrl).request().post(Entity.json(customer))) {
-                return response.readEntity(String.class);
+                return response.readEntity(Customer.class);
             }
         }
     }
 
-    public void unregister(String customerId) {
+    public void unregister(Customer customer) {
         try (var client = ClientBuilder.newClient()) {
-            client.target(baseUrl).path(customerId).request().delete();
+            client.target(baseUrl).path(customer.id.toString()).request().delete();
         }
     }
 

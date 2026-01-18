@@ -26,7 +26,6 @@ public class PaymentServiceSteps {
 
     private Customer customer;
     private Merchant merchant;
-    private String customerId, merchantId;
 
 
     private final CustomerService customerService = new CustomerService();
@@ -54,11 +53,11 @@ public class PaymentServiceSteps {
 
     @After
     public void tearDown() throws BankServiceException_Exception {
-        if (customerId != null) {
-            customerService.unregister(customerId);
+        if (customer != null && customer.id != null) {
+            customerService.unregister(customer);
         }
-        if (merchantId != null) {
-            merchantService.unregister(merchantId);
+        if (merchant != null && merchant.id != null) {
+            merchantService.unregister(merchant);
         }
 
         for (var account : accounts) {
@@ -79,7 +78,8 @@ public class PaymentServiceSteps {
 
     @Given("the customer is registered with Simple DTU Pay using their bank account")
     public void theCustomerIsRegisteredWithSimpleDTUPayUsingTheirBankAccount() throws BankServiceException_Exception {
-        customerId = customerService.register(customer);
+        customer = customerService.register(customer);
+        Assert.assertNotNull(customer.id);
     }
 
     @Given("a merchant with name {string}, last name {string}, and CPR {string}")
@@ -95,13 +95,14 @@ public class PaymentServiceSteps {
 
     @Given("the merchant is registered with Simple DTU Pay using their bank account")
     public void theMerchantIsRegisteredWithSimpleDTUPayUsingTheirBankAccount() {
-        merchantId = merchantService.register(merchant);
+        merchant = merchantService.register(merchant);
+        Assert.assertNotNull(merchant.id);
     }
 
     @When("the merchant initiates a payment for {string} kr by the customer")
     public void theMerchantInitiatesAPaymentForKrByTheCustomer(String amount) {
         try {
-            successful = paymentService.pay(amount, customerId, merchantId);
+            successful = paymentService.pay(amount, customer.id, merchant.id);
         } catch (Exception e) {
             successful = false;
             errorMessage = e.getMessage();

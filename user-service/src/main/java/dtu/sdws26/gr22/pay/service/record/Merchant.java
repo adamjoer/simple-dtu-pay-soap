@@ -9,4 +9,7 @@ public record Merchant(
         String cprNumber,
         String bankId
 ) {
+    public Merchant withId(UUID id) {
+        return new Merchant(id, firstName, lastName, cprNumber, bankId);
+    }
 }

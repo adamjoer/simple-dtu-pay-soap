@@ -31,22 +31,18 @@ public class UserService {
         this.queue.addHandler(TopicNames.MERCHANT_INFO_REQUESTED, this::handleMerchantInfoRequested);
     }
 
-    private UUID registerCustomer(String firstName, String lastName, String cprNumber, String bankId) {
+    private Customer registerCustomer(Customer customer) {
         var id = UUID.randomUUID();
-        var customer = new Customer(id, firstName, lastName, cprNumber, bankId);
+        customer = customer.withId(id);
         customers.put(id, customer);
-        return id;
+        return customer;
     }
 
     private void handleRegisterCustomer(Event event) {
         var customer = event.getArgument(0, Customer.class);
         var correlationId = event.getArgument(1, UUID.class);
-        registerCustomer(
-                customer.firstName(),
-                customer.lastName(),
-                customer.cprNumber(),
-                customer.bankId());
-        var customerRegistrationEvent = new Event(TopicNames.CUSTOMER_REGISTRATION_COMPLETED, correlationId);
+        customer = registerCustomer(customer);
+        var customerRegistrationEvent = new Event(TopicNames.CUSTOMER_REGISTRATION_COMPLETED, customer, correlationId);
         queue.publish(customerRegistrationEvent);
     }
 
@@ -69,23 +65,18 @@ public class UserService {
         queue.publish(customerEvent);
     }
 
-    private UUID registerMerchant(String firstName, String lastName, String cprNumber, String bankId) {
+    private Merchant registerMerchant(Merchant merchant) {
         var id = UUID.randomUUID();
-        var merchant = new Merchant(id, firstName, lastName, cprNumber, bankId);
+        merchant = merchant.withId(id);
         merchants.put(id, merchant);
-        return id;
+        return merchant;
     }
 
     private void handleRegisterMerchant(Event event) {
         var merchant = event.getArgument(0, Merchant.class);
         var correlationId = event.getArgument(1, UUID.class);
-        registerMerchant(
-                merchant.firstName(),
-                merchant.lastName(),
-                merchant.cprNumber(),
-                merchant.bankId()
-        );
-        var merchantRegistrationEvent = new Event(TopicNames.MERCHANT_REGISTRATION_COMPLETED, correlationId);
+        merchant = registerMerchant(merchant);
+        var merchantRegistrationEvent = new Event(TopicNames.MERCHANT_REGISTRATION_COMPLETED, merchant, correlationId);
         queue.publish(merchantRegistrationEvent);
     }
 

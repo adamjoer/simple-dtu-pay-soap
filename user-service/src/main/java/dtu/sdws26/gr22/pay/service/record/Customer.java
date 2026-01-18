@@ -9,4 +9,7 @@ public record Customer(
         String cprNumber,
         String bankId
 ) {
+    public Customer withId(UUID id) {
+        return new Customer(id, firstName, lastName, cprNumber, bankId);
+    }
 }

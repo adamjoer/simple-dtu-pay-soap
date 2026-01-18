@@ -9,6 +9,7 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.GenericType;
 
 import java.util.Collection;
+import java.util.UUID;
 
 public class PaymentService {
 
@@ -22,9 +23,9 @@ public class PaymentService {
         this.baseUrl = baseUrl;
     }
 
-    public boolean pay(String amount, String customerId, String merchantId) {
+    public boolean pay(String amount, UUID customerId, UUID merchantId) {
         try (var client = ClientBuilder.newClient()) {
-            var paymentRequest = new PaymentRequest(customerId, merchantId, amount);
+            var paymentRequest = new PaymentRequest(customerId.toString(), merchantId.toString(), amount);
             try (var response = client.target(baseUrl).path("payments").request().post(Entity.json(paymentRequest))) {
                 if (response.getStatus() != 200) {
                     throw new RuntimeException(response.readEntity(String.class));

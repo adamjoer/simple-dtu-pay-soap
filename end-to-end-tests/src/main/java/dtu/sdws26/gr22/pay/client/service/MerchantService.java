@@ -15,17 +15,17 @@ public class MerchantService {
         this.baseUrl = baseUrl;
     }
 
-    public String register(Merchant merchant) {
+    public Merchant register(Merchant merchant) {
         try (var client = ClientBuilder.newClient()) {
             try (var response = client.target(baseUrl).request().post(Entity.json(merchant))) {
-                return response.readEntity(String.class);
+                return response.readEntity(Merchant.class);
             }
         }
     }
 
-    public void unregister(String merchantId) {
+    public void unregister(Merchant merchant) {
         try (var client = ClientBuilder.newClient()) {
-            client.target(baseUrl).path(merchantId).request().delete();
+            client.target(baseUrl).path(merchant.id.toString()).request().delete();
         }
     }
 

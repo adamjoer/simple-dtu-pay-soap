@@ -9,6 +9,9 @@ public class Customer {
     public String cprNumber;
     public String bankId;
 
+    public Customer() {
+    }
+
     public Customer(UUID id, String firstName, String lastName, String cprNumber, String bankId) {
         this.id = id;
         this.firstName = firstName;
