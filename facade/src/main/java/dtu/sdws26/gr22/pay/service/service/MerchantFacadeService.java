@@ -12,9 +12,10 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
-public final class MerchantService {
+public final class MerchantFacadeService {
 
     private final Map<UUID, CompletableFuture<Merchant>> merchantsInProgress = new ConcurrentHashMap<>();
 
@@ -22,7 +23,7 @@ public final class MerchantService {
 
 
     @Inject
-    public MerchantService(MessageQueue queue) {
+    public MerchantFacadeService(MessageQueue queue) {
         this.queue = queue;
         queue.addHandler(TopicNames.MERCHANT_REGISTRATION_COMPLETED, this::handleMerchantRegistrationCompleted);
         queue.addHandler(TopicNames.MERCHANT_INFO_PROVIDED, this::handleMerchantInfoProvided);
@@ -35,7 +36,7 @@ public final class MerchantService {
         var event = new Event(TopicNames.MERCHANT_REGISTRATION_REQUESTED, merchant, id);
         queue.publish(event);
 
-        return merchantsInProgress.get(id).join();
+        return merchantsInProgress.get(id).orTimeout(5, TimeUnit.SECONDS).join();
     }
 
     public void unregister(String id) {
@@ -49,7 +50,7 @@ public final class MerchantService {
         var event = new Event(TopicNames.MERCHANT_INFO_REQUESTED, id, correlationId);
         queue.publish(event);
 
-        return Optional.ofNullable(merchantsInProgress.get(correlationId).join());
+        return Optional.ofNullable(merchantsInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join());
     }
 
     private void handleMerchantRegistrationCompleted(Event event) {

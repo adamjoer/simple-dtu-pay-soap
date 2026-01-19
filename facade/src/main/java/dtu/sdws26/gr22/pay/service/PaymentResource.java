@@ -6,17 +6,17 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import dtu.sdws26.gr22.pay.service.record.PaymentRequest;
-import dtu.sdws26.gr22.pay.service.service.PaymentService;
+import dtu.sdws26.gr22.pay.service.service.PaymentFacadeService;
 
 import java.util.Collection;
 
 @Path("/payments")
 public class PaymentResource {
 
-    private final PaymentService payService;
+    private final PaymentFacadeService payService;
 
     @Inject
-    public PaymentResource(PaymentService payService) {
+    public PaymentResource(PaymentFacadeService payService) {
         this.payService = payService;
     }
 

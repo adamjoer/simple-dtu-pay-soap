@@ -9,12 +9,16 @@ import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
-public final class PaymentService {
+public final class PaymentFacadeService {
 
     private final Map<UUID, CompletableFuture<Payment>> paymentInProgress = new ConcurrentHashMap<>();
     private final Map<UUID, CompletableFuture<Payment>> transactionInProgress = new ConcurrentHashMap<>();
@@ -23,7 +27,7 @@ public final class PaymentService {
     private final MessageQueue queue;
 
     @Inject
-    public PaymentService(MessageQueue queue) {
+    public PaymentFacadeService(MessageQueue queue) {
         this.queue = queue;
         queue.addHandler(TopicNames.PAYMENT_CREATED, this::handlePaymentCreated);
         queue.addHandler(TopicNames.TRANSACTION_PROVIDED, this::handleTransactionProvided);
@@ -40,7 +44,7 @@ public final class PaymentService {
         var paymentRequestedEvent = new Event(TopicNames.PAYMENT_REQUESTED, paymentRequest, correlationId);
         queue.publish(paymentRequestedEvent);
 
-        return paymentInProgress.get(correlationId).join();
+        return paymentInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join();
     }
 
     public Optional<Payment> getPaymentById(String id) {
@@ -49,7 +53,7 @@ public final class PaymentService {
         var transactionRequestedEvent = new Event(TopicNames.TRANSACTION_REQUESTED, id, correlationId);
         queue.publish(transactionRequestedEvent);
 
-        return Optional.ofNullable(transactionInProgress.get(correlationId).join());
+        return Optional.ofNullable(transactionInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join());
     }
 
     public Collection<Payment> getAllPayments() {
@@ -58,7 +62,7 @@ public final class PaymentService {
         var transactionRequestedEvent = new Event(TopicNames.TRANSACTION_ALL_HISTORY_REQUESTED, correlationId);
         queue.publish(transactionRequestedEvent);
 
-        return transactionHistoryInProgress.get(correlationId).join();
+        return transactionHistoryInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join();
     }
 
     private void handlePaymentCreated(Event event) {

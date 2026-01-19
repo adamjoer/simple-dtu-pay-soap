@@ -12,15 +12,16 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
-public final class CustomerService {
+public final class CustomerFacadeService {
     private final Map<UUID, CompletableFuture<Customer>> customersInProgress = new ConcurrentHashMap<>();
 
     private final MessageQueue queue;
 
     @Inject
-    public CustomerService(MessageQueue queue) {
+    public CustomerFacadeService(MessageQueue queue) {
         this.queue = queue;
         queue.addHandler(TopicNames.CUSTOMER_REGISTRATION_COMPLETED, this::handleCustomerRegistrationCompleted);
         queue.addHandler(TopicNames.CUSTOMER_INFO_PROVIDED, this::handleCustomerInfoProvided);
@@ -33,7 +34,7 @@ public final class CustomerService {
         var event = new Event(TopicNames.CUSTOMER_REGISTRATION_REQUESTED, customer, id);
         queue.publish(event);
 
-        return customersInProgress.get(id).join();
+        return customersInProgress.get(id).orTimeout(5, TimeUnit.SECONDS).join();
     }
 
     public void unregister(String id) {
@@ -47,7 +48,7 @@ public final class CustomerService {
         var event = new Event(TopicNames.CUSTOMER_INFO_REQUESTED, id, correlationId);
         queue.publish(event);
 
-        return Optional.ofNullable(customersInProgress.get(correlationId).join());
+        return Optional.ofNullable(customersInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join());
     }
 
     private void handleCustomerRegistrationCompleted(Event event) {
