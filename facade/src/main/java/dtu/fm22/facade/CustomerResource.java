@@ -2,8 +2,8 @@ package dtu.fm22.facade;
 
 import dtu.fm22.facade.exceptions.DTUPayException;
 import dtu.fm22.facade.record.Customer;
+import dtu.fm22.facade.record.TokenRequest;
 import dtu.fm22.facade.service.CustomerFacadeService;
-import dtu.sdws26.gr22.pay.service.record.TokenRequest;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
