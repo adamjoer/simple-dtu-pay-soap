@@ -105,7 +105,11 @@ public class PaymentServiceSteps {
     @Given("the customer has {int} unused tokens")
     public void theCustomerHasUnusedTokens(Integer numberOfTokens) {
         Assert.assertNotNull("Customer must be registered before requesting tokens", customer);
-        tokens = customerService.requestMoreTokens(customer, numberOfTokens);
+        try {
+            tokens = customerService.requestMoreTokens(customer, numberOfTokens);
+        } catch (Exception e) {
+            Assert.fail("Failed to request tokens: " + e.getMessage());
+        }
         Assert.assertEquals("Expected to receive " + numberOfTokens + " tokens, but got " + tokens.size(),
                 numberOfTokens.intValue(), tokens.size());
     }
@@ -149,10 +153,24 @@ public class PaymentServiceSteps {
         );
     }
 
+    @Then("the customer has {int} unused tokens left")
+    public void thenTheCustomerHasUnusedTokens(Integer numberOfTokens) {
+        Assert.assertNotNull("Customer must be registered before retrieving tokens", customer);
+        try {
+            tokens = customerService.retrieveTokens(customer);
+        } catch (Exception e) {
+            Assert.fail("Failed to request tokens: " + e.getMessage());
+        }
+        Assert.assertEquals("Expected to receive " + numberOfTokens + " tokens, but got " + tokens.size(),
+                numberOfTokens.intValue(), tokens.size());
+    }
 
     @When("the customer requests {int} tokens")
     public void theCustomerRequestsTokens(Integer numberOfTokens) {
-        customerService.requestMoreTokens(customer, numberOfTokens);
+        try {
+            tokens = customerService.requestMoreTokens(customer, numberOfTokens);
+        } catch (Exception e) {
+            Assert.fail("Failed to request tokens: " + e.getMessage());
+        }
     }
-
 }
