@@ -1,12 +1,9 @@
 package dtu.sdws26.gr22.pay.service;
 
-import dtu.sdws26.gr22.pay.service.record.Customer;
-import dtu.sdws26.gr22.pay.service.record.Merchant;
-import dtu.sdws26.gr22.pay.service.record.PaymentRequest;
+import dtu.sdws26.gr22.pay.service.record.*;
 import dtu.ws.fastmoney.BankService;
 import dtu.ws.fastmoney.BankServiceException_Exception;
 import dtu.ws.fastmoney.BankService_Service;
-import dtu.sdws26.gr22.pay.service.record.Payment;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -48,12 +45,12 @@ public class PaymentService {
         var correlationId = event.getArgument(1, UUID.class);
 
         pendingPaymentRequests.put(correlationId, paymentRequest);
-        
+
         // Validate token before processing payment
         if (paymentRequest.token() != null && !paymentRequest.token().isEmpty()) {
-            var validationRequest = new dtu.sdws26.gr22.pay.service.record.TokenValidationRequest(
-                paymentRequest.token(), 
-                paymentRequest.customerId()
+            var validationRequest = new TokenValidationRequest(
+                    paymentRequest.token(),
+                    paymentRequest.customerId()
             );
             var validationEvent = new Event(TopicNames.TOKEN_VALIDATION_REQUESTED, validationRequest, correlationId);
             queue.publish(validationEvent);
@@ -62,7 +59,7 @@ public class PaymentService {
             System.err.println("handlePaymentRequested: No token provided in payment request");
             pendingTokenValidations.put(correlationId, false);
         }
-        
+
         tryCompletePayment(correlationId);
     }
 
@@ -80,7 +77,7 @@ public class PaymentService {
         var request = pendingPaymentRequests.get(correlationId);
         var info = pendingPaymentInfo.get(correlationId);
         var tokenValid = pendingTokenValidations.get(correlationId);
-        
+
         if (request == null || info == null || tokenValid == null) {
             return;
         }
@@ -101,8 +98,9 @@ public class PaymentService {
 
     private void handleTokenValidationProvided(Event event) {
         var isValid = event.getArgument(0, Boolean.class);
-        var correlationId = event.getArgument(1, UUID.class);
-        
+        var message = event.getArgument(1, String.class);
+        var correlationId = event.getArgument(2, UUID.class);
+
         pendingTokenValidations.put(correlationId, isValid);
         tryCompletePayment(correlationId);
     }

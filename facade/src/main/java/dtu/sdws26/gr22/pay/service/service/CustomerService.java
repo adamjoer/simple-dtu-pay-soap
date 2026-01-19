@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
 public final class CustomerService {
@@ -39,7 +40,7 @@ public final class CustomerService {
         var event = new Event(TopicNames.CUSTOMER_REGISTRATION_REQUESTED, customer, id);
         queue.publish(event);
 
-        return customersInProgress.get(id).join();
+        return customersInProgress.get(id).orTimeout(5, TimeUnit.SECONDS).join();
     }
 
     public void unregister(String id) {
@@ -53,7 +54,7 @@ public final class CustomerService {
         var event = new Event(TopicNames.CUSTOMER_INFO_REQUESTED, id, correlationId);
         queue.publish(event);
 
-        return Optional.ofNullable(customersInProgress.get(correlationId).join());
+        return Optional.ofNullable(customersInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join());
     }
 
     private void handleCustomerRegistrationCompleted(Event event) {
@@ -73,9 +74,11 @@ public final class CustomerService {
     public List<String> getTokens(String customerId) {
         var correlationId = UUID.randomUUID();
         tokenRequestsInProgress.put(correlationId, new CompletableFuture<>());
+
         var event = new Event(TopicNames.CUSTOMER_TOKEN_REQUESTED, customerId, correlationId);
         queue.publish(event);
-        return tokenRequestsInProgress.get(correlationId).join();
+
+        return tokenRequestsInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join();
     }
 
     public List<String> requestTokens(String customerId, int numberOfTokens) {
@@ -84,7 +87,7 @@ public final class CustomerService {
         var tokenRequest = new TokenRequest(customerId, numberOfTokens);
         var event = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_REQUESTED, tokenRequest, correlationId);
         queue.publish(event);
-        return tokenRequestsInProgress.get(correlationId).join();
+        return tokenRequestsInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join();
     }
 
     private void handleTokenProvided(Event event) {

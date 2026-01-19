@@ -12,6 +12,7 @@ import messaging.TopicNames;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
 public final class PaymentService {
@@ -40,7 +41,7 @@ public final class PaymentService {
         var paymentRequestedEvent = new Event(TopicNames.PAYMENT_REQUESTED, paymentRequest, correlationId);
         queue.publish(paymentRequestedEvent);
 
-        return paymentInProgress.get(correlationId).join();
+        return paymentInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join();
     }
 
     public Optional<Payment> getPaymentById(String id) {
@@ -49,7 +50,7 @@ public final class PaymentService {
         var transactionRequestedEvent = new Event(TopicNames.TRANSACTION_REQUESTED, id, correlationId);
         queue.publish(transactionRequestedEvent);
 
-        return Optional.ofNullable(transactionInProgress.get(correlationId).join());
+        return Optional.ofNullable(transactionInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join());
     }
 
     public Collection<Payment> getAllPayments() {
@@ -58,7 +59,7 @@ public final class PaymentService {
         var transactionRequestedEvent = new Event(TopicNames.TRANSACTION_ALL_HISTORY_REQUESTED, correlationId);
         queue.publish(transactionRequestedEvent);
 
-        return transactionHistoryInProgress.get(correlationId).join();
+        return transactionHistoryInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join();
     }
 
     private void handlePaymentCreated(Event event) {

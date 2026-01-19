@@ -29,6 +29,13 @@ services:
       user-service:
         condition: service_started
 
+  token-service:
+    image: token-service
+    container_name: token-service-container
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+
   facade:
     image: facade-service
     container_name: facade-service-container

@@ -22,7 +22,7 @@ public class TokenService {
 
     // Map: customerId -> List of tokens
     private final ConcurrentHashMap<UUID, List<Token>> customerTokens = new ConcurrentHashMap<>();
-    
+
     // Map: tokenValue -> Token (for quick lookup)
     private final ConcurrentHashMap<String, Token> tokenLookup = new ConcurrentHashMap<>();
 
@@ -116,9 +116,9 @@ public class TokenService {
 
             // Publish success event with list of token values
             List<String> tokenValues = newTokens.stream()
-                .map(Token::tokenValue)
-                .collect(Collectors.toList());
-            
+                    .map(Token::tokenValue)
+                    .collect(Collectors.toList());
+
             var successEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, tokenValues, correlationId);
             queue.publish(successEvent);
 
@@ -133,24 +133,26 @@ public class TokenService {
      * Handles token request (get existing unused tokens)
      */
     private void handleTokenRequested(Event event) {
+        System.out.format("TokenService: Received CUSTOMER_TOKEN_REQUESTED event: %s%n", event);
         var customerIdStr = event.getArgument(0, String.class);
         var correlationId = event.getArgument(1, UUID.class);
 
         try {
             var customerId = UUID.fromString(customerIdStr);
             var unusedTokens = getUnusedTokens(customerId);
-            
+
             List<String> tokenValues = unusedTokens.stream()
-                .map(Token::tokenValue)
-                .collect(Collectors.toList());
+                    .map(Token::tokenValue)
+                    .collect(Collectors.toList());
 
             var tokenProvidedEvent = new Event(TopicNames.CUSTOMER_TOKEN_PROVIDED, tokenValues, correlationId);
             queue.publish(tokenProvidedEvent);
 
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
+            System.err.format("TokenService: Error handling CUSTOMER_TOKEN_REQUESTED for customerId %s: %s%n", customerIdStr, e.getMessage());
             var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_PROVIDED,
-                Collections.emptyList(),
-                correlationId);
+                    Collections.emptyList(),
+                    correlationId);
             queue.publish(errorEvent);
         }
     }
@@ -167,11 +169,11 @@ public class TokenService {
             var customerId = UUID.fromString(validationRequest.customerId());
 
             var token = tokenLookup.get(tokenValue);
-            
+
             if (token == null) {
                 // Token doesn't exist
                 var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                    false, "Token not found", correlationId);
+                        false, "Token not found", correlationId);
                 queue.publish(errorEvent);
                 return;
             }
@@ -179,7 +181,7 @@ public class TokenService {
             if (token.used()) {
                 // Token already used
                 var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                    false, "Token has already been used", correlationId);
+                        false, "Token has already been used", correlationId);
                 queue.publish(errorEvent);
                 return;
             }
@@ -187,19 +189,19 @@ public class TokenService {
             if (!token.customerId().equals(customerId)) {
                 // Token doesn't belong to this customer
                 var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                    false, "Token does not belong to this customer", correlationId);
+                        false, "Token does not belong to this customer", correlationId);
                 queue.publish(errorEvent);
                 return;
             }
 
             // Token is valid
             var successEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                true, "Token is valid", correlationId);
+                    true, "Token is valid", correlationId);
             queue.publish(successEvent);
 
         } catch (IllegalArgumentException e) {
             var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                false, "Invalid customer ID format", correlationId);
+                    false, "Invalid customer ID format", correlationId);
             queue.publish(errorEvent);
         }
     }
@@ -214,14 +216,14 @@ public class TokenService {
         var token = tokenLookup.get(tokenValue);
         if (token == null) {
             var errorEvent = new Event(TopicNames.TOKEN_MARK_USED_COMPLETED,
-                false, "Token not found", correlationId);
+                    false, "Token not found", correlationId);
             queue.publish(errorEvent);
             return;
         }
 
         if (token.used()) {
             var errorEvent = new Event(TopicNames.TOKEN_MARK_USED_COMPLETED,
-                false, "Token already marked as used", correlationId);
+                    false, "Token already marked as used", correlationId);
             queue.publish(errorEvent);
             return;
         }
@@ -229,7 +231,7 @@ public class TokenService {
         // Mark token as used
         var updatedToken = token.withUsed(true);
         tokenLookup.put(tokenValue, updatedToken);
-        
+
         // Update in customer's token list
         var customerId = token.customerId();
         customerTokens.computeIfPresent(customerId, (key, tokens) -> {
@@ -238,7 +240,7 @@ public class TokenService {
         });
 
         var successEvent = new Event(TopicNames.TOKEN_MARK_USED_COMPLETED,
-            true, "Token marked as used", correlationId);
+                true, "Token marked as used", correlationId);
         queue.publish(successEvent);
     }
 
@@ -251,7 +253,7 @@ public class TokenService {
             return Collections.emptyList();
         }
         return tokens.stream()
-            .filter(token -> !token.used())
-            .collect(Collectors.toList());
+                .filter(token -> !token.used())
+                .collect(Collectors.toList());
     }
 }

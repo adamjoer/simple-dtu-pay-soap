@@ -27,6 +27,7 @@ public class PaymentServiceSteps {
     private Customer customer;
     private Merchant merchant;
 
+    private List<String> tokens;
 
     private final CustomerService customerService = new CustomerService();
     private final MerchantService merchantService = new MerchantService();
@@ -72,8 +73,12 @@ public class PaymentServiceSteps {
 
     @Given("the customer is registered with the bank with an initial balance of {string} kr")
     public void theCustomerIsRegisteredWithTheBankWithAnInitialBalanceOfKr(String balance) throws BankServiceException_Exception {
-        var bankId = registerAccount(customer.firstName, customer.lastName, customer.cprNumber, balance);
-        customer.bankId = bankId;
+        try {
+            var bankId = registerAccount(customer.firstName, customer.lastName, customer.cprNumber, balance);
+            customer.bankId = bankId;
+        } catch (BankServiceException_Exception e) {
+            Assert.fail("Failed to register customer with bank: " + e.getMessage());
+        }
     }
 
     @Given("the customer is registered with Simple DTU Pay using their bank account")
@@ -99,14 +104,26 @@ public class PaymentServiceSteps {
         Assert.assertNotNull(merchant.id);
     }
 
-    @When("the merchant initiates a payment for {string} kr by the customer")
+    @Given("the customer has {int} unused tokens")
+    public void theCustomerHasUnusedTokens(Integer numberOfTokens) {
+        Assert.assertNotNull("Customer must be registered before requesting tokens", customer);
+        tokens = customerService.requestMoreTokens(customer, numberOfTokens);
+        Assert.assertEquals("Expected to receive " + numberOfTokens + " tokens, but got " + tokens.size(),
+                numberOfTokens.intValue(), tokens.size());
+    }
+
+    @When("the customer initiates a payment for {string} kr using a token")
     public void theMerchantInitiatesAPaymentForKrByTheCustomer(String amount) {
+        Assert.assertNotNull(tokens);
+        Assert.assertFalse("Customer must have tokens to make a payment", tokens.isEmpty());
+        var token = tokens.getFirst();
         try {
-            successful = paymentService.pay(amount, customer.id, merchant.id);
+            successful = paymentService.pay(amount, customer.id, merchant.id, token);
         } catch (Exception e) {
             successful = false;
             errorMessage = e.getMessage();
         }
+        tokens.remove(token);
     }
 
     @Then("the payment is successful")
@@ -133,4 +150,11 @@ public class PaymentServiceSteps {
                 0, amountBigDecimal.compareTo(balance)
         );
     }
+
+
+    @When("the customer requests {int} tokens")
+    public void theCustomerRequestsTokens(Integer numberOfTokens) {
+        customerService.requestMoreTokens(customer, numberOfTokens);
+    }
+
 }

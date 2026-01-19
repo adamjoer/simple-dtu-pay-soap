@@ -2,6 +2,7 @@ package dtu.sdws26.gr22.pay.service;
 
 import dtu.sdws26.gr22.pay.service.exceptions.DTUPayException;
 import dtu.sdws26.gr22.pay.service.record.Customer;
+import dtu.sdws26.gr22.pay.service.record.TokenRequest;
 import dtu.sdws26.gr22.pay.service.service.CustomerService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -56,7 +57,7 @@ public class CustomerResource {
     @Path("/{id}/tokens")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public java.util.List<String> requestTokens(@PathParam("id") String id, dtu.sdws26.gr22.pay.service.record.TokenRequest tokenRequest) {
+    public java.util.List<String> requestTokens(@PathParam("id") String id, TokenRequest tokenRequest) {
         try {
             // Ensure the customerId in the request matches the path parameter
             if (!tokenRequest.customerId().equals(id)) {
