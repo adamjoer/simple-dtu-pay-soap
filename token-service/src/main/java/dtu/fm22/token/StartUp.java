@@ -1,4 +1,4 @@
-package dtu.sdws26.gr22.pay.service;
+package dtu.fm22.token;
 
 import messaging.implementations.RabbitMqQueue;
 

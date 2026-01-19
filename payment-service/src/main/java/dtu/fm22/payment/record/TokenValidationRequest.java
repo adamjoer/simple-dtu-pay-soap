@@ -1,4 +1,4 @@
-package dtu.sdws26.gr22.pay.service.record;
+package dtu.fm22.payment.record;
 
 public record TokenValidationRequest(
         String tokenValue,

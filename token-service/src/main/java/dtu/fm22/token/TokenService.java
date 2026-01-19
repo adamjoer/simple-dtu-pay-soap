@@ -1,8 +1,8 @@
-package dtu.sdws26.gr22.pay.service;
+package dtu.fm22.token;
 
-import dtu.sdws26.gr22.pay.service.record.Token;
-import dtu.sdws26.gr22.pay.service.record.TokenRequest;
-import dtu.sdws26.gr22.pay.service.record.TokenValidationRequest;
+import dtu.fm22.token.record.Token;
+import dtu.fm22.token.record.TokenRequest;
+import dtu.fm22.token.record.TokenValidationRequest;
 
 import java.security.SecureRandom;
 import java.util.*;
