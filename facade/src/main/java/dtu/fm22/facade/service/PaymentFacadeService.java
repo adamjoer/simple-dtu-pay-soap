@@ -2,6 +2,7 @@ package dtu.fm22.facade.service;
 
 import com.google.gson.reflect.TypeToken;
 import dtu.fm22.facade.record.PaymentRequest;
+import dtu.fm22.facade.record.TokenValidationRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import dtu.fm22.facade.record.Payment;
 import jakarta.inject.Inject;
@@ -43,6 +44,10 @@ public final class PaymentFacadeService {
 
         var paymentRequestedEvent = new Event(TopicNames.PAYMENT_REQUESTED, paymentRequest, correlationId);
         queue.publish(paymentRequestedEvent);
+
+        var validationRequest = new TokenValidationRequest(paymentRequest.token(), paymentRequest.customerId());
+        var validationEvent = new Event(TopicNames.TOKEN_VALIDATION_REQUESTED, validationRequest, correlationId);
+        queue.publish(validationEvent);
 
         return paymentInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join();
     }
