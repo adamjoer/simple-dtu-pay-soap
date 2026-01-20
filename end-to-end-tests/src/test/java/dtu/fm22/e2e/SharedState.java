@@ -12,8 +12,6 @@ public class SharedState {
     public Customer customer;
     public Merchant merchant;
     public List<String> tokens;
-    public boolean successful = false;
-    public String errorMessage;
 
     public final BankService bank = new BankService_Service().getBankServicePort();
     public final List<String> accounts = new ArrayList<>();

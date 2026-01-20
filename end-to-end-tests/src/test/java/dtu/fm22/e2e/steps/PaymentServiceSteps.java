@@ -13,6 +13,9 @@ public class PaymentServiceSteps {
     private final SharedState state;
     private final PaymentService paymentService = new PaymentService();
 
+    public boolean successful = false;
+    public String errorMessage;
+
     public PaymentServiceSteps(SharedState state) {
         this.state = state;
     }
@@ -23,17 +26,17 @@ public class PaymentServiceSteps {
         assertFalse("Customer must have state.tokens to make a payment", state.tokens.isEmpty());
         var token = state.tokens.getFirst();
         try {
-            state.successful = paymentService.pay(amount, state.customer.id, state.merchant.id, token);
+            successful = paymentService.pay(amount, state.customer.id, state.merchant.id, token);
         } catch (Exception e) {
-            state.successful = false;
-            state.errorMessage = e.getMessage();
+            successful = false;
+            errorMessage = e.getMessage();
         }
         state.tokens.remove(token);
     }
 
     @Then("the payment is successful")
     public void thePaymentIsSuccessful() {
-        assertTrue("Expected payment to be successful, but it failed with error: " + state.errorMessage, state.successful);
+        assertTrue("Expected payment to be successful, but it failed with error: " + errorMessage, successful);
     }
     @Then("the balance of the customer at the bank is {string} kr")
     public void theBalanceOfTheCustomerAtTheBankIsKr(String amount) throws Exception {
