@@ -1,0 +1,56 @@
+services:
+  rabbit-mq:
+    image: rabbitmq:management
+    container_name: rabbit-mq_container
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  user-service:
+    build:
+      context: ../user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+
+  payment-service:
+    build:
+      context: ../payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+
+  token-service:
+    build:
+      context: ../token-service
+      dockerfile: Dockerfile
+    container_name: token-service
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+
+  facade:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: facade
+    ports:
+      - "8080:8080"
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      token-service:
+        condition: service_started
