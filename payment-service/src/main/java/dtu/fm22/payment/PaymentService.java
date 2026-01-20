@@ -1,12 +1,9 @@
 package dtu.fm22.payment;
 
-import dtu.fm22.payment.record.Customer;
-import dtu.fm22.payment.record.Merchant;
-import dtu.fm22.payment.record.PaymentRequest;
+import dtu.fm22.payment.record.*;
 import dtu.ws.fastmoney.BankService;
 import dtu.ws.fastmoney.BankServiceException_Exception;
 import dtu.ws.fastmoney.BankService_Service;
-import dtu.fm22.payment.record.Payment;
 
 import java.math.BigDecimal;
 import java.time.Instant;
