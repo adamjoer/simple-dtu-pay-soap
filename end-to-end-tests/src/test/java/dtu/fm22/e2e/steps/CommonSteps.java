@@ -17,7 +17,8 @@ import java.math.BigDecimal;
 import static org.junit.Assert.*;
 
 public class CommonSteps {
-    private final String API_KEY = System.getenv("SIMPLE_DTU_PAY_API_KEY");
+    private static final String BANK_API_KEY = System.getenv("BANK_API_KEY");
+
     private final SharedState state;
     private final CustomerService customerService = new CustomerService();
     private final MerchantService merchantService = new MerchantService();
@@ -27,14 +28,14 @@ public class CommonSteps {
     }
 
     public String registerAccount(String firstName, String lastName, String cprNumber, String initialBalance) throws BankServiceException_Exception {
-        assertNotNull("API_KEY environment variable is not set", API_KEY);
+        assertTrue("BANK_API_KEY environment variable is not set", BANK_API_KEY != null && !BANK_API_KEY.isEmpty());
         var user = new User();
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setCprNumber(cprNumber);
 
         var balance = new BigDecimal(initialBalance);
-        var account = state.bank.createAccountWithBalance(API_KEY, user, balance);
+        var account = state.bank.createAccountWithBalance(BANK_API_KEY, user, balance);
         state.accounts.add(account);
         return account;
     }
@@ -50,7 +51,7 @@ public class CommonSteps {
 
         try {
             for (var account : state.accounts) {
-                state.bank.retireAccount(API_KEY, account);
+                state.bank.retireAccount(BANK_API_KEY, account);
             }
         } catch (BankServiceException_Exception e) {
             System.err.println("Failed to retire bank accounts: " + e.getMessage());

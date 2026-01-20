@@ -21,8 +21,6 @@ import messaging.TopicNames;
 
 public class PaymentService {
 
-    private final String API_KEY = System.getenv("SIMPLE_DTU_PAY_API_KEY");
-
     private final ConcurrentHashMap<UUID, Payment> payments = new ConcurrentHashMap<>();
 
     private final BankService bankService = new BankService_Service().getBankServicePort();
