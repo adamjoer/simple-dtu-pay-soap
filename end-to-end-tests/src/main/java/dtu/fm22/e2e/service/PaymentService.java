@@ -43,21 +43,4 @@ public class PaymentService {
         }
     }
 
-    public Collection<Payment> getAllPaymentsMerchant(String id) {
-        try (var client = ClientBuilder.newClient()) {
-            try (var response = client.target(baseUrl).path("merchants").path(id).path("reports").request().get()) {
-                return response.readEntity(new GenericType<>() {
-                });
-            }
-        }
-    }
-
-    public Collection<Payment> getAllPaymentsCustomer(String id) {
-        try (var client = ClientBuilder.newClient()) {
-            try (var response = client.target(baseUrl).path("customers").path(id).path("reports").request().get()) {
-                return response.readEntity(new GenericType<>() {
-                });
-            }
-        }
-    }
 }

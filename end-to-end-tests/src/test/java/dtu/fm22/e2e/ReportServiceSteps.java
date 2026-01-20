@@ -1,85 +1,92 @@
 package dtu.fm22.e2e;
 
-import dtu.fm22.e2e.record.Customer;
-import dtu.fm22.e2e.record.Merchant;
+import dtu.fm22.e2e.record.Payment;
 import dtu.fm22.e2e.service.CustomerService;
 import dtu.fm22.e2e.service.MerchantService;
-import dtu.fm22.e2e.service.PaymentService;
-import dtu.ws.fastmoney.BankService;
-import dtu.ws.fastmoney.BankServiceException_Exception;
-import dtu.ws.fastmoney.BankService_Service;
-import dtu.ws.fastmoney.User;
-import io.cucumber.java.After;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.junit.Assert;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+
+import static org.junit.Assert.*;
 
 public class ReportServiceSteps {
-    private final String API_KEY = System.getenv("SIMPLE_DTU_PAY_API_KEY");
 
-    private Customer customer;
-    private Merchant merchant;
+    private final SharedState state;
 
-    private List<String> tokens;
-
-    private final CustomerService customerService = new CustomerService();
     private final MerchantService merchantService = new MerchantService();
-    private final PaymentService paymentService = new PaymentService();
+    private final CustomerService customerService = new CustomerService();
 
-    private boolean successful = false;
-    private String errorMessage;
+    private Collection<Payment> customerReport;
+    private Collection<Payment> merchantReport;
 
-    private final BankService bank = new BankService_Service().getBankServicePort();
-    private final List<String> accounts = new ArrayList<>();
-
-    public String registerAccount(String firstName, String lastName, String cprNumber, String initialBalance) throws BankServiceException_Exception {
-        Assert.assertNotNull("API_KEY environment variable is not set", API_KEY);
-        var user = new User();
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setCprNumber(cprNumber);
-
-        var balance = new BigDecimal(initialBalance);
-        var account = bank.createAccountWithBalance(API_KEY, user, balance);
-        accounts.add(account);
-        return account;
-    }
-
-    @After
-    public void tearDown() throws BankServiceException_Exception {
-        if (customer != null && customer.id != null) {
-            customerService.unregister(customer);
-        }
-        if (merchant != null && merchant.id != null) {
-            merchantService.unregister(merchant);
-        }
-
-        for (var account : accounts) {
-            bank.retireAccount(API_KEY, account);
-        }
-    }
-
-    @When("the customer initiates a payment for {string} kr to the merchant")
-    public void theCustomerInitiatesAPaymentForKrToTheMerchant(String string) {
-        // Write code here that turns the phrase above into concrete actions
-        throw new io.cucumber.java.PendingException();
+    public ReportServiceSteps(SharedState state) {
+        this.state = state;
     }
 
     @When("the merchant requests a transaction report")
     public void theMerchantRequestsATransactionReport() {
-        // Write code here that turns the phrase above into concrete actions
-        throw new io.cucumber.java.PendingException();
+        merchantReport = merchantService.getReport(state.merchant);
     }
 
-    @Then("the report includes a transaction of {string} kr from {string} to {string}")
-    public void theReportIncludesATransactionOfKrFromTo(String string, String string2, String string3) {
-        // Write code here that turns the phrase above into concrete actions
-        throw new io.cucumber.java.PendingException();
+    @Then("the merchant report includes a transaction of {string} kr to {string} and contains no customer information")
+    public void theMerchantReportIncludesATransactionOfKrFrom(String amount, String merchantFullName) {
+        assertNotNull(merchantReport);
+        assertFalse(merchantReport.isEmpty());
+
+        var amountBigDecimal = new BigDecimal(amount);
+        var merchantNames = merchantFullName.split(" ");
+        boolean found = merchantReport.stream().anyMatch(payment ->
+                payment.merchant().firstName.equals(merchantNames[0]) &&
+                        payment.merchant().lastName.equals(merchantNames[1]) &&
+                        payment.amount().compareTo(amountBigDecimal) == 0
+        );
+
+        boolean containsCustomerInfo = merchantReport.stream().anyMatch(payment -> payment.customer() != null);
+
+        assertTrue(
+                "Expected to find a transaction of "
+                        + amount + " kr to " + merchantFullName +
+                        " in the report, but did not.\nReport:\n"
+                        + merchantReport,
+                found
+        );
+        assertFalse(
+                "Expected merchant report to contain no customer"
+                        + "information, but it did. Report:"
+                        + merchantReport,
+                containsCustomerInfo
+        );
     }
 
+    @When("the customer requests a transaction report")
+    public void theCustomerRequestsATransactionReport() {
+        customerReport = customerService.getReport(state.customer);
+    }
 
+    @Then("the customer report includes a transaction of {string} kr from {string} to {string}")
+    public void theCustomerReportIncludesATransactionOfKrFromTo(String amount, String customerFullName, String merchantFullName) {
+        assertNotNull(customerReport);
+        assertFalse(customerReport.isEmpty());
+
+        var amountBigDecimal = new BigDecimal(amount);
+        var customerNames = customerFullName.split(" ");
+        var merchantNames = merchantFullName.split(" ");
+        boolean found = customerReport.stream().anyMatch(payment ->
+                payment.customer().firstName.equals(customerNames[0]) &&
+                        payment.customer().lastName.equals(customerNames[1]) &&
+                        payment.merchant().firstName.equals(merchantNames[0]) &&
+                        payment.merchant().lastName.equals(merchantNames[1]) &&
+                        payment.amount().compareTo(amountBigDecimal) == 0
+        );
+
+        assertTrue(
+                "Expected to find a transaction of "
+                        + amount + " kr from " + customerFullName +
+                        " to " + customerFullName + " in the report, but did not. Report:"
+                        + customerReport,
+                found
+        );
+    }
 }

@@ -1,11 +1,13 @@
 package dtu.fm22.e2e.service;
 
 import dtu.fm22.e2e.record.Customer;
+import dtu.fm22.e2e.record.Payment;
 import dtu.fm22.e2e.record.TokenRequest;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.GenericType;
 
+import java.util.Collection;
 import java.util.List;
 
 public class CustomerService {
@@ -49,6 +51,18 @@ public class CustomerService {
     public List<String> retrieveTokens(Customer customer) {
         try (var client = ClientBuilder.newClient()) {
             try (var response = client.target(baseUrl).path(customer.id.toString()).path("tokens").request().get()) {
+                if (response.getStatus() != 200) {
+                    throw new RuntimeException(response.readEntity(String.class));
+                }
+                return response.readEntity(new GenericType<>() {
+                });
+            }
+        }
+    }
+
+    public Collection<Payment> getReport(Customer customer) {
+        try (var client = ClientBuilder.newClient()) {
+            try (var response = client.target(baseUrl).path(customer.id.toString()).path("reports").request().get()) {
                 if (response.getStatus() != 200) {
                     throw new RuntimeException(response.readEntity(String.class));
                 }

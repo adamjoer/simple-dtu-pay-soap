@@ -4,6 +4,7 @@ import dtu.fm22.e2e.record.Customer;
 import dtu.fm22.e2e.record.Merchant;
 import dtu.fm22.e2e.service.CustomerService;
 import dtu.fm22.e2e.service.MerchantService;
+import dtu.ws.fastmoney.BankService;
 import dtu.ws.fastmoney.BankServiceException_Exception;
 import dtu.ws.fastmoney.User;
 import io.cucumber.java.After;
@@ -40,7 +41,7 @@ public class CommonSteps {
     }
 
     @After
-    public void tearDown() throws BankServiceException_Exception {
+    public void tearDown() {
         if (state.customer != null && state.customer.id != null) {
             customerService.unregister(state.customer);
         }
@@ -48,8 +49,12 @@ public class CommonSteps {
             merchantService.unregister(state.merchant);
         }
 
-        for (var account : state.accounts) {
-            state.bank.retireAccount(API_KEY, account);
+        try {
+            for (var account : state.accounts) {
+                state.bank.retireAccount(API_KEY, account);
+            }
+        } catch (BankServiceException_Exception e) {
+            System.err.println("Failed to retire bank accounts: " + e.getMessage());
         }
     }
 
@@ -59,7 +64,7 @@ public class CommonSteps {
     }
 
     @Given("the customer is registered with the bank with an initial balance of {string} kr")
-    public void theCustomerIsRegisteredWithTheBankWithAnInitialBalanceOfKr(String balance) throws BankServiceException_Exception {
+    public void theCustomerIsRegisteredWithTheBankWithAnInitialBalanceOfKr(String balance)  {
         try {
             var bankId = registerAccount(state.customer.firstName, state.customer.lastName, state.customer.cprNumber, balance);
             state.customer.bankId = bankId;
@@ -69,7 +74,7 @@ public class CommonSteps {
     }
 
     @Given("the customer is registered with Simple DTU Pay using their bank account")
-    public void theCustomerIsRegisteredWithSimpleDTUPayUsingTheirBankAccount() throws BankServiceException_Exception {
+    public void theCustomerIsRegisteredWithSimpleDTUPayUsingTheirBankAccount() {
         state.customer = customerService.register(state.customer);
         assertNotNull(state.customer.id);
     }
@@ -80,9 +85,13 @@ public class CommonSteps {
     }
 
     @Given("the merchant is registered with the bank with an initial balance of {string} kr")
-    public void theMerchantIsRegisteredWithTheBankWithAnInitialBalanceOfKr(String amount) throws Exception {
-        var bankId = registerAccount(state.merchant.firstName, state.merchant.lastName, state.merchant.cprNumber, amount);
-        state.merchant.bankId = bankId;
+    public void theMerchantIsRegisteredWithTheBankWithAnInitialBalanceOfKr(String amount) {
+        try {
+            var bankId = registerAccount(state.merchant.firstName, state.merchant.lastName, state.merchant.cprNumber, amount);
+            state.merchant.bankId = bankId;
+        } catch(BankServiceException_Exception e) {
+            fail("Failed to register merchant with bank: " + e.getMessage());
+        }
     }
 
     @Given("the merchant is registered with Simple DTU Pay using their bank account")

@@ -19,4 +19,15 @@ public class Customer {
         this.cprNumber = cprNumber;
         this.bankId = bankId;
     }
+
+    @Override
+    public String toString() {
+        return "Customer{" +
+                "id=" + id +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", cprNumber='" + cprNumber + '\'' +
+                ", bankId='" + bankId + '\'' +
+                '}';
+    }
 }

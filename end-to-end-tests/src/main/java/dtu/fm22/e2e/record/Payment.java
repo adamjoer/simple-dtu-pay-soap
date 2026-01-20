@@ -11,4 +11,16 @@ public record Payment(
         String token,
         String timestamp
 ) {
+
+    @Override
+    public String toString() {
+        return "Payment{" +
+                "id=" + id +
+                ", customer=" + customer +
+                ", merchant=" + merchant +
+                ", amount=" + amount +
+                ", token='" + token + '\'' +
+                ", timestamp='" + timestamp + '\'' +
+                '}';
+    }
 }
