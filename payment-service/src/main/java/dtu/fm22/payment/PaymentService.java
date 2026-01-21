@@ -61,9 +61,9 @@ public class PaymentService {
         var correlationId = event.getArgument(3, UUID.class);
 
         if (!isValid) {
-            // Token invalid - send error response immediately
+            // Token invalid - send error response immediately with generic message
             tokenValidationErrors.put(correlationId, message);
-            var errorResponse = new RabbitMQResponse<Payment>(400, message);
+            var errorResponse = new RabbitMQResponse<Payment>(400, "Invalid or used token");
             var errorEvent = new Event(TopicNames.PAYMENT_CREATED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;
