@@ -46,6 +46,9 @@ public class PaymentService {
         this.queue.addHandler(TopicNames.MANAGER_REPORT_PROVIDED, this::handleManagerReportProvided);
     }
 
+    /**
+     * @author s215206
+     */
     public void handlePaymentRequested(Event event) {
         var paymentRequest = event.getArgument(0, PaymentRequest.class);
         var correlationId = event.getArgument(1, UUID.class);
@@ -59,6 +62,9 @@ public class PaymentService {
         queue.publish(tokenValidationEvent);
     }
 
+    /**
+     * @author s215206
+     */
     public void handleTokenValidationProvided(Event event) {
         var isValid = event.getArgument(0, Boolean.class);
         var customerId = event.getArgument(1, String.class);

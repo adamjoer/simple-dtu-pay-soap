@@ -17,6 +17,9 @@ import java.util.function.Consumer;
 
 import static org.junit.Assert.*;
 
+/**
+ * @author s215206
+ */
 public class UserServiceSteps {
 
     private CompletableFuture<Event> publishedEvent;

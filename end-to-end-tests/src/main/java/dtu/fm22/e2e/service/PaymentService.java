@@ -9,6 +9,9 @@ import jakarta.ws.rs.core.GenericType;
 import java.util.Collection;
 import java.util.UUID;
 
+/**
+ * @author s215206, s200718, s205135
+ */
 public class PaymentService {
 
     private final String baseUrl;

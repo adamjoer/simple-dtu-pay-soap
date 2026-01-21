@@ -19,6 +19,9 @@ import java.util.function.Consumer;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * @author s215206
+ */
 public class PaymentServiceSteps {
 
     private CompletableFuture<Event> publishedEvent;

@@ -18,6 +18,9 @@ import java.util.function.Consumer;
 
 import static org.junit.Assert.*;
 
+/**
+ * @author s215206
+ */
 public class TokenServiceSteps {
 
     private CompletableFuture<Event> publishedEvent;
