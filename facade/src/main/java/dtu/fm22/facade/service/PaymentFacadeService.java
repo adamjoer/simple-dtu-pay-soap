@@ -30,6 +30,9 @@ public final class PaymentFacadeService {
         queue.addHandler(TopicNames.TRANSACTION_PROVIDED, this::handleTransactionProvided);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public Payment createPayment(PaymentRequest paymentRequest) {
         var correlationId = UUID.randomUUID();
         paymentInProgress.put(correlationId, new CompletableFuture<>());
@@ -48,6 +51,9 @@ public final class PaymentFacadeService {
         }
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public Optional<Payment> getPaymentById(String id) {
         var correlationId = UUID.fromString(id);
         transactionInProgress.put(correlationId, new CompletableFuture<>());
@@ -57,6 +63,9 @@ public final class PaymentFacadeService {
         return Optional.ofNullable(transactionInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join());
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private void handlePaymentCreated(Event event) {
         var paymentResponse = event.getArgumentWithError(0, Payment.class);
         var correlationId = event.getArgument(1, UUID.class);
@@ -70,6 +79,9 @@ public final class PaymentFacadeService {
         }
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private void handleTransactionProvided(Event event) {
         var payment = event.getArgument(0, Payment.class);
         var correlationId = event.getArgument(1, UUID.class);

@@ -1,5 +1,8 @@
 package messaging.implementations;
 
+/**
+ * @author s200718
+ */
 public class RabbitMQResponse<T> {
 
     private final boolean success;

@@ -16,6 +16,9 @@ public class ManagerResource {
         this.managerFacadeService = managerFacadeService;
     }
 
+    /**
+     * @author s200718, s205135
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Payment> getManagerReport() {

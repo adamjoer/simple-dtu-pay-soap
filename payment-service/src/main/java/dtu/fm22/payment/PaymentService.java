@@ -98,6 +98,9 @@ public class PaymentService {
         tryCompletePayment(correlationId);
     }
 
+    /**
+     * @author s200718
+     */
     private synchronized void tryCompletePayment(UUID correlationId) {
         if (payments.containsKey(correlationId)) {
             return;
@@ -115,6 +118,9 @@ public class PaymentService {
         doPayment(info.customer(), info.merchant(), request.amount(), request.token(), correlationId);
     }
 
+    /**
+     * @author s200718
+     */
     private void doPayment(Customer customer, Merchant merchant, String amount, String token, UUID paymentId) {
         var amountBigDecimal = new BigDecimal(amount);
         try {
@@ -140,6 +146,9 @@ public class PaymentService {
         queue.publish(paymentCreatedEvent);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public void handleTransactionRequested(Event event) {
         var id = event.getArgument(0, String.class);
         var correlationId = event.getArgument(1, UUID.class);
@@ -154,6 +163,9 @@ public class PaymentService {
         }
     }
 
+    /**
+     * @author s200718, s205135
+     */
     public void handleCustomerReportRequested(Event event) {
         var customer = event.getArgument(0, Customer.class);
         var filteredList = payments.values()
@@ -164,6 +176,9 @@ public class PaymentService {
         queue.publish(paymentCreatedEvent);
     }
 
+    /**
+     * @author s200718, s205135
+     */
     public void handleMerchantReportRequested(Event event) {
         var merchant = event.getArgument(0, Merchant.class);
         var filteredList = payments
@@ -177,6 +192,9 @@ public class PaymentService {
         queue.publish(paymentCreatedEvent);
     }
 
+    /**
+     * @author s200718, s205135
+     */
     public void handleManagerReportProvided(Event event) {
         var correlationId = event.getArgument(0, UUID.class);
         var allPayments = payments

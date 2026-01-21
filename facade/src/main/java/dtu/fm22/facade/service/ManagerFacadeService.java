@@ -36,6 +36,9 @@ public class ManagerFacadeService {
         this.queue.addHandler(TopicNames.MANAGER_REPORT_PROVIDED, this::handleReportProvided);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public Optional<Collection<Payment>> getCustomerReport(String id) {
         var maybeCustomer = customerFacadeService.getById(id);
         if (maybeCustomer.isEmpty()) {
@@ -50,6 +53,9 @@ public class ManagerFacadeService {
         return Optional.ofNullable(pendingReports.get(customer.id()).orTimeout(5, TimeUnit.SECONDS).join());
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public Optional<Collection<Payment>> getMerchantReport(String id) {
         var maybeMerchant = merchantFacadeService.getById(id);
         if (maybeMerchant.isEmpty()) {
@@ -64,6 +70,9 @@ public class ManagerFacadeService {
         return Optional.ofNullable(pendingReports.get(merchant.id()).orTimeout(5, TimeUnit.SECONDS).join());
     }
 
+    /**
+     * @author s200718, s205135
+     */
     public Collection<Payment> getManagerReport() {
         var correlationId = UUID.randomUUID();
         pendingReports.put(correlationId, new CompletableFuture<>());
@@ -73,6 +82,9 @@ public class ManagerFacadeService {
         return pendingReports.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join();
     }
 
+    /**
+     * @author s200718, s205135
+     */
     public void handleReportProvided(Event event) {
         var collectionType = new TypeToken<Collection<Payment>>() {
         };

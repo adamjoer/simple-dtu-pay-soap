@@ -31,6 +31,9 @@ public class UserService {
         this.queue.addHandler(TopicNames.MERCHANT_INFO_REQUESTED, this::handleMerchantInfoRequested);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private Customer registerCustomer(Customer customer) {
         var id = UUID.randomUUID();
         customer = customer.withId(id);
@@ -38,6 +41,9 @@ public class UserService {
         return customer;
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public void handleRegisterCustomer(Event event) {
         var customer = event.getArgument(0, Customer.class);
         var correlationId = event.getArgument(1, UUID.class);
@@ -46,6 +52,9 @@ public class UserService {
         queue.publish(customerRegistrationEvent);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private void unregisterCustomer(String id) {
         try {
             var uuid = UUID.fromString(id);
@@ -58,6 +67,9 @@ public class UserService {
         }
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public void handleUnregisterCustomer(Event event) {
         var id = event.getArgument(0, String.class);
         unregisterCustomer(id);
@@ -65,6 +77,9 @@ public class UserService {
         queue.publish(customerEvent);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private Merchant registerMerchant(Merchant merchant) {
         var id = UUID.randomUUID();
         merchant = merchant.withId(id);
@@ -72,6 +87,9 @@ public class UserService {
         return merchant;
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public void handleRegisterMerchant(Event event) {
         var merchant = event.getArgument(0, Merchant.class);
         var correlationId = event.getArgument(1, UUID.class);
@@ -92,6 +110,9 @@ public class UserService {
         }
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public void handleUnregisterMerchant(Event event) {
         var id = event.getArgument(0, String.class);
         unregisterMerchant(id);
@@ -99,6 +120,9 @@ public class UserService {
         queue.publish(merchantEvent);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public void handleCustomerInfoRequested(Event event) {
         var customerId = event.getArgument(0, String.class);
         var correlationId = event.getArgument(1, UUID.class);
@@ -109,6 +133,9 @@ public class UserService {
         queue.publish(customerInfoProvidedEvent);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public void handleMerchantInfoRequested(Event event) {
         var merchantId = event.getArgument(0, String.class);
         var correlationId = event.getArgument(1, UUID.class);
@@ -119,6 +146,9 @@ public class UserService {
         queue.publish(merchantInfoProvidedEvent);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public void handlePaymentInfoRequested(Event event) {
         var paymentInfoRequest = event.getArgument(0, PaymentInfoRequest.class);
         var correlationId = event.getArgument(1, UUID.class);
@@ -135,6 +165,9 @@ public class UserService {
         }
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private Optional<Merchant> getMerchantById(String id) {
         try {
             var uuid = UUID.fromString(id);
@@ -145,6 +178,9 @@ public class UserService {
         }
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private Optional<Customer> getByCustomerId(String id) {
         try {
             var uuid = UUID.fromString(id);
