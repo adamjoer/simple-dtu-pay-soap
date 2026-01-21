@@ -52,7 +52,7 @@ public class TokenService {
     /**
      * Handles token replenishment request (requesting new tokens)
      */
-    private void handleTokenReplenishRequested(Event event) {
+    public void handleTokenReplenishRequested(Event event) {
         var tokenRequest = event.getArgument(0, TokenRequest.class);
         var correlationId = event.getArgument(1, UUID.class);
 
@@ -132,7 +132,7 @@ public class TokenService {
     /**
      * Handles token request (get existing unused tokens)
      */
-    private void handleTokenRequested(Event event) {
+    public void handleTokenRequested(Event event) {
         System.out.format("TokenService: Received CUSTOMER_TOKEN_REQUESTED event: %s%n", event);
         var customerIdStr = event.getArgument(0, String.class);
         var correlationId = event.getArgument(1, UUID.class);
@@ -158,58 +158,43 @@ public class TokenService {
     }
 
     /**
-     * Handles token validation request (check if token is valid and belongs to customer)
+     * Handles token validation request (check if token is valid)
+     * Returns the customerId associated with the token in the response
      */
-    private void handleTokenValidationRequested(Event event) {
+    public void handleTokenValidationRequested(Event event) {
         var validationRequest = event.getArgument(0, TokenValidationRequest.class);
         var correlationId = event.getArgument(1, UUID.class);
 
-        try {
-            var tokenValue = validationRequest.tokenValue();
-            var customerId = UUID.fromString(validationRequest.customerId());
+        var tokenValue = validationRequest.tokenValue();
+        var token = tokenLookup.get(tokenValue);
 
-            var token = tokenLookup.get(tokenValue);
-
-            if (token == null) {
-                // Token doesn't exist
-                var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                        false, "Token not found", correlationId);
-                queue.publish(errorEvent);
-                return;
-            }
-
-            if (token.used()) {
-                // Token already used
-                var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                        false, "Token has already been used", correlationId);
-                queue.publish(errorEvent);
-                return;
-            }
-
-            if (!token.customerId().equals(customerId)) {
-                // Token doesn't belong to this customer
-                var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                        false, "Token does not belong to this customer", correlationId);
-                queue.publish(errorEvent);
-                return;
-            }
-
-            // Token is valid
-            var successEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                    true, "Token is valid", correlationId);
-            queue.publish(successEvent);
-
-        } catch (IllegalArgumentException e) {
+        if (token == null) {
+            // Token doesn't exist
             var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                    false, "Invalid customer ID format", correlationId);
+                    false, (String) null, "Token not found", correlationId);
             queue.publish(errorEvent);
+            return;
         }
+
+        if (token.used()) {
+            // Token already used
+            var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
+                    false, (String) null, "Token has already been used", correlationId);
+            queue.publish(errorEvent);
+            return;
+        }
+
+        // Token is valid - return the customerId associated with the token
+        var customerId = token.customerId().toString();
+        var successEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
+                true, customerId, "Token is valid", correlationId);
+        queue.publish(successEvent);
     }
 
     /**
      * Handles request to mark a token as used
      */
-    private void handleTokenMarkUsedRequested(Event event) {
+    public void handleTokenMarkUsedRequested(Event event) {
         var tokenValue = event.getArgument(0, String.class);
         var correlationId = event.getArgument(1, UUID.class);
 

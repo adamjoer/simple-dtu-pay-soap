@@ -26,7 +26,7 @@ public class PaymentServiceSteps {
         assertFalse("Customer must have state.tokens to make a payment", state.tokens.isEmpty());
         var token = state.tokens.getFirst();
         try {
-            successful = paymentService.pay(amount, state.customer.id, state.merchant.id, token);
+            successful = paymentService.pay(amount, state.merchant.id, token);
         } catch (Exception e) {
             successful = false;
             errorMessage = e.getMessage();

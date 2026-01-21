@@ -21,16 +21,22 @@ public class PaymentService {
 
     private final ConcurrentHashMap<UUID, Payment> payments = new ConcurrentHashMap<>();
 
-    private final BankService bankService = new BankService_Service().getBankServicePort();
+    private final BankService bankService;
 
     private final Map<UUID, PaymentInfo> pendingPaymentInfo = new ConcurrentHashMap<>();
     private final Map<UUID, PaymentRequest> pendingPaymentRequests = new ConcurrentHashMap<>();
-    private final Map<UUID, Boolean> pendingTokenValidations = new ConcurrentHashMap<>();
+    private final Map<UUID, String> resolvedCustomerIds = new ConcurrentHashMap<>();
+    private final Map<UUID, String> tokenValidationErrors = new ConcurrentHashMap<>();
 
     private final MessageQueue queue;
 
     public PaymentService(MessageQueue queue) {
+        this(queue, new BankService_Service().getBankServicePort());
+    }
+
+    public PaymentService(MessageQueue queue, BankService bankService) {
         this.queue = queue;
+        this.bankService = bankService;
         this.queue.addHandler(TopicNames.PAYMENT_REQUESTED, this::handlePaymentRequested);
         this.queue.addHandler(TopicNames.PAYMENT_INFO_PROVIDED, this::handlePaymentInfoProvided);
         this.queue.addHandler(TopicNames.TOKEN_VALIDATION_PROVIDED, this::handleTokenValidationProvided);
@@ -40,24 +46,61 @@ public class PaymentService {
         this.queue.addHandler(TopicNames.MANAGER_REPORT_PROVIDED, this::handleManagerReportProvided);
     }
 
-    private void handlePaymentRequested(Event event) {
+    public void handlePaymentRequested(Event event) {
         var paymentRequest = event.getArgument(0, PaymentRequest.class);
         var correlationId = event.getArgument(1, UUID.class);
 
+        // Store the payment request
         pendingPaymentRequests.put(correlationId, paymentRequest);
-        tryCompletePayment(correlationId);
+
+        // Request token validation (this will return customerId)
+        var tokenValidationRequest = new TokenValidationRequest(paymentRequest.token());
+        var tokenValidationEvent = new Event(TopicNames.TOKEN_VALIDATION_REQUESTED, tokenValidationRequest, correlationId);
+        queue.publish(tokenValidationEvent);
     }
 
-    private void handlePaymentInfoProvided(Event event) {
+    public void handleTokenValidationProvided(Event event) {
+        var isValid = event.getArgument(0, Boolean.class);
+        var customerId = event.getArgument(1, String.class);
+        var message = event.getArgument(2, String.class);
+        var correlationId = event.getArgument(3, UUID.class);
+
+        if (!isValid) {
+            // Token invalid - send error response immediately with generic message
+            tokenValidationErrors.put(correlationId, message);
+            var errorResponse = new RabbitMQResponse<Payment>(400, "Invalid or used token");
+            var errorEvent = new Event(TopicNames.PAYMENT_CREATED, errorResponse, correlationId);
+            queue.publish(errorEvent);
+            return;
+        }
+
+        // Token is valid - store customerId and request payment info
+        resolvedCustomerIds.put(correlationId, customerId);
+
+        var paymentRequest = pendingPaymentRequests.get(correlationId);
+        if (paymentRequest != null) {
+            // Step 2: Request user info using resolved customerId
+            var paymentInfoRequest = new PaymentInfoRequest(customerId, paymentRequest.merchantId());
+            var paymentInfoEvent = new Event(TopicNames.PAYMENT_INFO_REQUESTED, paymentInfoRequest, correlationId);
+            queue.publish(paymentInfoEvent);
+        }
+    }
+
+    public void handlePaymentInfoProvided(Event event) {
         var customer = event.getArgument(0, Customer.class);
         var merchant = event.getArgument(1, Merchant.class);
         var correlationId = event.getArgument(2, UUID.class);
 
         var paymentInfo = new PaymentInfo(customer, merchant);
         pendingPaymentInfo.put(correlationId, paymentInfo);
+
+        // Complete the payment
         tryCompletePayment(correlationId);
     }
 
+    /**
+     * @author s200718
+     */
     private synchronized void tryCompletePayment(UUID correlationId) {
         if (payments.containsKey(correlationId)) {
             return;
@@ -65,36 +108,19 @@ public class PaymentService {
 
         var request = pendingPaymentRequests.get(correlationId);
         var info = pendingPaymentInfo.get(correlationId);
-        var tokenValid = pendingTokenValidations.get(correlationId);
+        var customerId = resolvedCustomerIds.get(correlationId);
 
-        if (request == null || info == null || tokenValid == null) {
-            return;
-        }
-
-        if (!tokenValid) {
-            var errorResponse = new RabbitMQResponse<Payment>(400, "Invalid or used token");
-            var errorEvent = new Event(TopicNames.PAYMENT_CREATED, errorResponse, correlationId);
-            queue.publish(errorEvent);
+        // Need all components to complete payment
+        if (request == null || info == null || customerId == null) {
             return;
         }
 
         doPayment(info.customer(), info.merchant(), request.amount(), request.token(), correlationId);
-
-        // Clean up
-        // pendingPaymentRequests.remove(correlationId);
-        // pendingPaymentInfo.remove(correlationId);
-        // pendingTokenValidations.remove(correlationId);
     }
 
-    private void handleTokenValidationProvided(Event event) {
-        var isValid = event.getArgument(0, Boolean.class);
-        var message = event.getArgument(1, String.class);
-        var correlationId = event.getArgument(2, UUID.class);
-
-        pendingTokenValidations.put(correlationId, isValid);
-        tryCompletePayment(correlationId);
-    }
-
+    /**
+     * @author s200718
+     */
     private void doPayment(Customer customer, Merchant merchant, String amount, String token, UUID paymentId) {
         var amountBigDecimal = new BigDecimal(amount);
         try {
@@ -120,7 +146,10 @@ public class PaymentService {
         queue.publish(paymentCreatedEvent);
     }
 
-    private void handleTransactionRequested(Event event) {
+    /**
+     * @author s200718, s205135, s232268
+     */
+    public void handleTransactionRequested(Event event) {
         var id = event.getArgument(0, String.class);
         var correlationId = event.getArgument(1, UUID.class);
         try {
@@ -134,7 +163,10 @@ public class PaymentService {
         }
     }
 
-    private void handleCustomerReportRequested(Event event) {
+    /**
+     * @author s200718, s205135
+     */
+    public void handleCustomerReportRequested(Event event) {
         var customer = event.getArgument(0, Customer.class);
         var filteredList = payments.values()
                 .stream()
@@ -144,7 +176,10 @@ public class PaymentService {
         queue.publish(paymentCreatedEvent);
     }
 
-    private void handleMerchantReportRequested(Event event) {
+    /**
+     * @author s200718, s205135
+     */
+    public void handleMerchantReportRequested(Event event) {
         var merchant = event.getArgument(0, Merchant.class);
         var filteredList = payments
                 .values()
@@ -157,7 +192,10 @@ public class PaymentService {
         queue.publish(paymentCreatedEvent);
     }
 
-    private void handleManagerReportProvided(Event event) {
+    /**
+     * @author s200718, s205135
+     */
+    public void handleManagerReportProvided(Event event) {
         var correlationId = event.getArgument(0, UUID.class);
         var allPayments = payments
                 .values()

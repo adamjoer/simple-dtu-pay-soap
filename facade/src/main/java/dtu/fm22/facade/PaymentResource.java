@@ -20,6 +20,9 @@ public class PaymentResource {
         this.payService = payService;
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -27,6 +30,9 @@ public class PaymentResource {
         return payService.createPayment(paymentRequest);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)

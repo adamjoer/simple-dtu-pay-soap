@@ -5,6 +5,9 @@ import jakarta.ws.rs.Produces;
 import messaging.MessageQueue;
 import messaging.implementations.RabbitMqQueue;
 
+/**
+ * @author s200718
+ */
 @ApplicationScoped
 public class Config {
     @Produces

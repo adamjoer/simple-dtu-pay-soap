@@ -33,6 +33,9 @@ public final class CustomerFacadeService {
         queue.addHandler(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, this::handleTokenReplenishCompleted);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public Customer register(Customer customer) {
         var id = UUID.randomUUID();
 
@@ -48,6 +51,9 @@ public final class CustomerFacadeService {
         queue.publish(event);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public Optional<Customer> getById(String id) {
         var correlationId = UUID.randomUUID();
         customersInProgress.put(correlationId, new CompletableFuture<>());
@@ -57,6 +63,9 @@ public final class CustomerFacadeService {
         return Optional.ofNullable(customersInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join());
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private void handleCustomerRegistrationCompleted(Event event) {
         var customer = event.getArgument(0, Customer.class);
         var correlationId = event.getArgument(1, UUID.class);
@@ -64,6 +73,9 @@ public final class CustomerFacadeService {
         customersInProgress.get(correlationId).complete(customer);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private void handleCustomerInfoProvided(Event event) {
         var customer = event.getArgument(0, Customer.class);
         var correlationId = event.getArgument(1, UUID.class);

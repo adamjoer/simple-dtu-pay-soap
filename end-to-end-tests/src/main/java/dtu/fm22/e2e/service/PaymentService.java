@@ -21,9 +21,9 @@ public class PaymentService {
         this.baseUrl = baseUrl;
     }
 
-    public boolean pay(String amount, UUID customerId, UUID merchantId, String token) {
+    public boolean pay(String amount, UUID merchantId, String token) {
         try (var client = ClientBuilder.newClient()) {
-            var paymentRequest = new PaymentRequest(customerId.toString(), merchantId.toString(), amount, token);
+            var paymentRequest = new PaymentRequest(merchantId.toString(), amount, token);
             try (var response = client.target(baseUrl).path("payments").request().post(Entity.json(paymentRequest))) {
                 if (response.getStatus() != 200) {
                     throw new RuntimeException(response.readEntity(String.class));

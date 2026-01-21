@@ -24,7 +24,7 @@ public class TokenServiceSteps {
     public void theCustomerInitiatesAPaymentForKrUsingAnInvalidToken(String amount) {
         var token = "invalid-token";
         try {
-            successful = paymentService.pay(amount, state.customer.id, state.merchant.id, token);
+            successful = paymentService.pay(amount, state.merchant.id, token);
         } catch (Exception e) {
             successful = false;
             errorMessage = e.getMessage();

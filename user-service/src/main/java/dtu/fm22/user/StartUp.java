@@ -2,6 +2,9 @@ package dtu.fm22.user;
 
 import messaging.implementations.RabbitMqQueue;
 
+/**
+ * @author s200718, s205135, s232268
+ */
 public class StartUp {
     public static void main(String[] args) throws Exception {
         new StartUp().startUp();

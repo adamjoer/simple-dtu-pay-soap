@@ -3,6 +3,9 @@ package dtu.fm22.facade.exceptions;
 import jakarta.ws.rs.*;
 import messaging.implementations.RabbitMQResponse;
 
+/**
+ * @author s200718
+ */
 public class ExceptionFactory {
     public static WebApplicationException fromRabbitMqResponse(RabbitMQResponse<?> response) {
         return switch (response.statusCode()) {

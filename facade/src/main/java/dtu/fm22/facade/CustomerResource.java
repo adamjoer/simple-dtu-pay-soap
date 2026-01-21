@@ -1,6 +1,5 @@
 package dtu.fm22.facade;
 
-import dtu.fm22.facade.exceptions.DTUPayException;
 import dtu.fm22.facade.record.Customer;
 import dtu.fm22.facade.record.Payment;
 import dtu.fm22.facade.record.TokenRequest;
@@ -25,6 +24,9 @@ public class CustomerResource {
         this.managerFacadeService = managerFacadeService;
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -32,6 +34,9 @@ public class CustomerResource {
         return customerFacadeService.register(customer);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -39,14 +44,13 @@ public class CustomerResource {
         return customerFacadeService.getById(id).orElseThrow(() -> new NotFoundException("Customer not found"));
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     @DELETE
     @Path("/{id}")
     public void deleteCustomer(@PathParam("id") String id) {
-        try {
-            customerFacadeService.unregister(id);
-        } catch (DTUPayException e) {
-            throw new NotFoundException(e.getMessage());
-        }
+        customerFacadeService.unregister(id);
     }
 
     @GET
@@ -76,6 +80,9 @@ public class CustomerResource {
         }
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     @GET
     @Path("/{id}/reports")
     @Produces(MediaType.APPLICATION_JSON)

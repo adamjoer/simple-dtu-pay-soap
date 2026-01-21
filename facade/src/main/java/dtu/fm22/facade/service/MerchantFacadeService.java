@@ -29,6 +29,9 @@ public final class MerchantFacadeService {
         queue.addHandler(TopicNames.MERCHANT_INFO_PROVIDED, this::handleMerchantInfoProvided);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public Merchant register(Merchant merchant) {
         var id = UUID.randomUUID();
 
@@ -39,11 +42,17 @@ public final class MerchantFacadeService {
         return merchantsInProgress.get(id).orTimeout(5, TimeUnit.SECONDS).join();
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public void unregister(String id) {
         var event = new Event(TopicNames.MERCHANT_UNREGISTRATION_REQUESTED, id);
         queue.publish(event);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public Optional<Merchant> getById(String id) {
         var correlationId = UUID.randomUUID();
         merchantsInProgress.put(correlationId, new CompletableFuture<>());
@@ -53,6 +62,9 @@ public final class MerchantFacadeService {
         return Optional.ofNullable(merchantsInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join());
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private void handleMerchantRegistrationCompleted(Event event) {
         var merchant = event.getArgument(0, Merchant.class);
         var correlationId = event.getArgument(1, UUID.class);
@@ -60,6 +72,9 @@ public final class MerchantFacadeService {
         merchantsInProgress.get(correlationId).complete(merchant);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private void handleMerchantInfoProvided(Event event) {
         var merchant = event.getArgument(0, Merchant.class);
         var correlationId = event.getArgument(1, UUID.class);

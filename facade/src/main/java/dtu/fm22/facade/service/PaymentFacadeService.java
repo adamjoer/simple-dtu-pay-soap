@@ -4,7 +4,6 @@ import dtu.fm22.facade.exceptions.ExceptionFactory;
 import dtu.fm22.facade.record.PaymentRequest;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.WebApplicationException;
-import dtu.fm22.facade.record.TokenValidationRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import dtu.fm22.facade.record.Payment;
 import jakarta.inject.Inject;
@@ -31,19 +30,15 @@ public final class PaymentFacadeService {
         queue.addHandler(TopicNames.TRANSACTION_PROVIDED, this::handleTransactionProvided);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public Payment createPayment(PaymentRequest paymentRequest) {
         var correlationId = UUID.randomUUID();
         paymentInProgress.put(correlationId, new CompletableFuture<>());
 
-        var paymentInfoRequestedEvent = new Event(TopicNames.PAYMENT_INFO_REQUESTED, paymentRequest, correlationId);
-        queue.publish(paymentInfoRequestedEvent);
-
         var paymentRequestedEvent = new Event(TopicNames.PAYMENT_REQUESTED, paymentRequest, correlationId);
         queue.publish(paymentRequestedEvent);
-
-        var validationRequest = new TokenValidationRequest(paymentRequest.token(), paymentRequest.customerId());
-        var validationEvent = new Event(TopicNames.TOKEN_VALIDATION_REQUESTED, validationRequest, correlationId);
-        queue.publish(validationEvent);
 
         try {
             return paymentInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join();
@@ -56,6 +51,9 @@ public final class PaymentFacadeService {
         }
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     public Optional<Payment> getPaymentById(String id) {
         var correlationId = UUID.fromString(id);
         transactionInProgress.put(correlationId, new CompletableFuture<>());
@@ -65,6 +63,9 @@ public final class PaymentFacadeService {
         return Optional.ofNullable(transactionInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join());
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private void handlePaymentCreated(Event event) {
         var paymentResponse = event.getArgumentWithError(0, Payment.class);
         var correlationId = event.getArgument(1, UUID.class);
@@ -78,6 +79,9 @@ public final class PaymentFacadeService {
         }
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private void handleTransactionProvided(Event event) {
         var payment = event.getArgument(0, Payment.class);
         var correlationId = event.getArgument(1, UUID.class);

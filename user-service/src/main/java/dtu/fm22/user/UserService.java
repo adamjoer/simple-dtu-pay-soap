@@ -4,7 +4,7 @@ import dtu.fm22.user.exceptions.CustomerNotFoundException;
 import dtu.fm22.user.exceptions.MerchantNotFoundException;
 import dtu.fm22.user.record.Customer;
 import dtu.fm22.user.record.Merchant;
-import dtu.fm22.user.record.PaymentRequest;
+import dtu.fm22.user.record.PaymentInfoRequest;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
@@ -31,6 +31,9 @@ public class UserService {
         this.queue.addHandler(TopicNames.MERCHANT_INFO_REQUESTED, this::handleMerchantInfoRequested);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private Customer registerCustomer(Customer customer) {
         var id = UUID.randomUUID();
         customer = customer.withId(id);
@@ -38,7 +41,10 @@ public class UserService {
         return customer;
     }
 
-    private void handleRegisterCustomer(Event event) {
+    /**
+     * @author s200718, s205135, s232268
+     */
+    public void handleRegisterCustomer(Event event) {
         var customer = event.getArgument(0, Customer.class);
         var correlationId = event.getArgument(1, UUID.class);
         customer = registerCustomer(customer);
@@ -46,6 +52,9 @@ public class UserService {
         queue.publish(customerRegistrationEvent);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private void unregisterCustomer(String id) {
         try {
             var uuid = UUID.fromString(id);
@@ -58,13 +67,19 @@ public class UserService {
         }
     }
 
-    private void handleUnregisterCustomer(Event event) {
+    /**
+     * @author s200718, s205135, s232268
+     */
+    public void handleUnregisterCustomer(Event event) {
         var id = event.getArgument(0, String.class);
         unregisterCustomer(id);
         var customerEvent = new Event(TopicNames.CUSTOMER_UNREGISTRATION_COMPLETED, id);
         queue.publish(customerEvent);
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private Merchant registerMerchant(Merchant merchant) {
         var id = UUID.randomUUID();
         merchant = merchant.withId(id);
@@ -72,7 +87,10 @@ public class UserService {
         return merchant;
     }
 
-    private void handleRegisterMerchant(Event event) {
+    /**
+     * @author s200718, s205135, s232268
+     */
+    public void handleRegisterMerchant(Event event) {
         var merchant = event.getArgument(0, Merchant.class);
         var correlationId = event.getArgument(1, UUID.class);
         merchant = registerMerchant(merchant);
@@ -92,14 +110,20 @@ public class UserService {
         }
     }
 
-    private void handleUnregisterMerchant(Event event) {
+    /**
+     * @author s200718, s205135, s232268
+     */
+    public void handleUnregisterMerchant(Event event) {
         var id = event.getArgument(0, String.class);
         unregisterMerchant(id);
         var merchantEvent = new Event(TopicNames.MERCHANT_UNREGISTRATION_COMPLETED, id);
         queue.publish(merchantEvent);
     }
 
-    private void handleCustomerInfoRequested(Event event) {
+    /**
+     * @author s200718, s205135, s232268
+     */
+    public void handleCustomerInfoRequested(Event event) {
         var customerId = event.getArgument(0, String.class);
         var correlationId = event.getArgument(1, UUID.class);
 
@@ -109,7 +133,10 @@ public class UserService {
         queue.publish(customerInfoProvidedEvent);
     }
 
-    private void handleMerchantInfoRequested(Event event) {
+    /**
+     * @author s200718, s205135, s232268
+     */
+    public void handleMerchantInfoRequested(Event event) {
         var merchantId = event.getArgument(0, String.class);
         var correlationId = event.getArgument(1, UUID.class);
 
@@ -119,22 +146,28 @@ public class UserService {
         queue.publish(merchantInfoProvidedEvent);
     }
 
-    private void handlePaymentInfoRequested(Event event) {
-        var paymentRequest = event.getArgument(0, PaymentRequest.class);
+    /**
+     * @author s200718, s205135, s232268
+     */
+    public void handlePaymentInfoRequested(Event event) {
+        var paymentInfoRequest = event.getArgument(0, PaymentInfoRequest.class);
         var correlationId = event.getArgument(1, UUID.class);
 
         try {
-            var customer = getByCustomerId(paymentRequest.customerId()).orElse(null);
-            var merchant = getMerchantById(paymentRequest.merchantId()).orElse(null);
+            var customer = getByCustomerId(paymentInfoRequest.customerId()).orElse(null);
+            var merchant = getMerchantById(paymentInfoRequest.merchantId()).orElse(null);
 
             var paymentInfoProvidedEvent = new Event(TopicNames.PAYMENT_INFO_PROVIDED, customer, merchant, correlationId);
             queue.publish(paymentInfoProvidedEvent);
 
         } catch (IllegalArgumentException e) {
-            System.err.println("handlePaymentInfoRequested: Invalid UUID format in payment request");
+            System.err.println("handlePaymentInfoRequested: Invalid UUID format in payment info request");
         }
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private Optional<Merchant> getMerchantById(String id) {
         try {
             var uuid = UUID.fromString(id);
@@ -145,6 +178,9 @@ public class UserService {
         }
     }
 
+    /**
+     * @author s200718, s205135, s232268
+     */
     private Optional<Customer> getByCustomerId(String id) {
         try {
             var uuid = UUID.fromString(id);
@@ -154,6 +190,4 @@ public class UserService {
             return Optional.empty();
         }
     }
-
-
 }
