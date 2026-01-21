@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
-import messaging.implementations.RabbitMQResponse;
+import messaging.implementations.RabbitMqResponse;
 
 /**
  * @author s242576
@@ -77,7 +77,7 @@ public class TokenService {
                 var errorMessage = "Invalid number of tokens requested. Must be between "
                         + MIN_TOKEN_REQUEST + " and"
                         + " " + MAX_TOKEN_REQUEST;
-                var errorResponse = new RabbitMQResponse<>(400, errorMessage);
+                var errorResponse = new RabbitMqResponse<>(400, errorMessage);
                 var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, errorResponse, correlationId);
                 queue.publish(errorEvent);
                 return;
@@ -95,7 +95,7 @@ public class TokenService {
                         + unusedCount
                         + " unused tokens. Can only "
                         + "request when having 0 or 1 unused token.";
-                var errorResponse = new RabbitMQResponse<>(400, errorMessage);
+                var errorResponse = new RabbitMqResponse<>(400, errorMessage);
                 var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, errorResponse, correlationId);
                 queue.publish(errorEvent);
                 return;
@@ -108,7 +108,7 @@ public class TokenService {
                         + " tokens. Would exceed maximum of "
                         + MAX_UNUSED_TOKENS
                         + " unused tokens.";
-                var errorResponse = new RabbitMQResponse<>(400, errorMessage);
+                var errorResponse = new RabbitMqResponse<>(400, errorMessage);
                 var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, errorResponse, correlationId);
                 queue.publish(errorEvent);
                 return;
@@ -145,14 +145,14 @@ public class TokenService {
 
             var successEvent = new Event(
                     TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED,
-                    new RabbitMQResponse<>(tokenValues),
+                    new RabbitMqResponse<>(tokenValues),
                     correlationId
             );
             queue.publish(successEvent);
 
         } catch (IllegalArgumentException e) {
             var errorMessage = "Invalid customer ID format: " + tokenRequest.customerId();
-            var errorResponse = new RabbitMQResponse<>(400, errorMessage);
+            var errorResponse = new RabbitMqResponse<>(400, errorMessage);
             var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, errorResponse, correlationId);
             queue.publish(errorEvent);
         }
@@ -181,13 +181,13 @@ public class TokenService {
 
             var tokenProvidedEvent = new Event(
                     TopicNames.CUSTOMER_TOKEN_PROVIDED,
-                    new RabbitMQResponse<>(tokenValues),
+                    new RabbitMqResponse<>(tokenValues),
                     correlationId
             );
             queue.publish(tokenProvidedEvent);
 
         } catch (Exception e) {
-            var errorResponse = new RabbitMQResponse<>(400, "Invalid customer ID format: " + customerIdStr);
+            var errorResponse = new RabbitMqResponse<>(400, "Invalid customer ID format: " + customerIdStr);
             var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_PROVIDED, errorResponse, correlationId);
             queue.publish(errorEvent);
         }
@@ -210,7 +210,7 @@ public class TokenService {
 
         if (token == null) {
             // Token doesn't exist
-            var errorResponse = new RabbitMQResponse<>(404, "Token not found");
+            var errorResponse = new RabbitMqResponse<>(404, "Token not found");
             var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;
@@ -218,7 +218,7 @@ public class TokenService {
 
         if (token.used()) {
             // Token already used
-            var errorResponse = new RabbitMQResponse<>(400, "Token has already been used");
+            var errorResponse = new RabbitMqResponse<>(400, "Token has already been used");
             var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;
@@ -226,7 +226,7 @@ public class TokenService {
 
         // Token is valid - return the customerId associated with the token
         var customerId = token.customerId().toString();
-        var successResponse = new RabbitMQResponse<>(customerId);
+        var successResponse = new RabbitMqResponse<>(customerId);
         var successEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED, successResponse, correlationId);
         queue.publish(successEvent);
     }
@@ -244,14 +244,14 @@ public class TokenService {
 
         var token = tokenLookup.get(tokenValue);
         if (token == null) {
-            var errorResponse = new RabbitMQResponse<>("Token not found");
+            var errorResponse = new RabbitMqResponse<>("Token not found");
             var errorEvent = new Event(TopicNames.TOKEN_MARK_USED_COMPLETED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;
         }
 
         if (token.used()) {
-            var errorResponse = new RabbitMQResponse<>("Token already marked as used");
+            var errorResponse = new RabbitMqResponse<>("Token already marked as used");
             var errorEvent = new Event(TopicNames.TOKEN_MARK_USED_COMPLETED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;
@@ -270,7 +270,7 @@ public class TokenService {
 
         var successEvent = new Event(
                 TopicNames.TOKEN_MARK_USED_COMPLETED,
-                new RabbitMQResponse<>(true),
+                new RabbitMqResponse<>(true),
                 correlationId
         );
         queue.publish(successEvent);

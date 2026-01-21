@@ -10,7 +10,7 @@ import jakarta.inject.Inject;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
-import messaging.implementations.RabbitMQResponse;
+import messaging.implementations.RabbitMqResponse;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -68,7 +68,7 @@ public final class PaymentFacadeService {
      * @author s200718, s205135, s232268
      */
     private void handlePaymentCreated(Event event) {
-        RabbitMQResponse<Payment> paymentResponse = event.getArgumentWithError(0, Payment.class);
+        RabbitMqResponse<Payment> paymentResponse = event.getArgumentWithError(0, Payment.class);
         var correlationId = event.getArgument(1, UUID.class);
 
         var future = paymentInProgress.get(correlationId);

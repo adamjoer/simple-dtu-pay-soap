@@ -10,7 +10,7 @@ import io.cucumber.java.en.When;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
-import messaging.implementations.RabbitMQResponse;
+import messaging.implementations.RabbitMqResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -91,7 +91,7 @@ public class PaymentServiceSteps {
         // Step 2: Token validation provided (valid)
         publishedEvent = new CompletableFuture<>();
         var tokenValidationEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                new RabbitMQResponse<String>(testCustomer.id().toString()), correlationId);
+                new RabbitMqResponse<String>(testCustomer.id().toString()), correlationId);
         service.handleTokenValidationProvided(tokenValidationEvent);
         publishedEvent.join(); // Wait for payment info request
 
@@ -125,14 +125,14 @@ public class PaymentServiceSteps {
     @When("a {string} event with valid=true is received")
     public void tokenValidationProvidedValid(String eventType) {
         publishedEvent = new CompletableFuture<>();
-        var event = new Event(eventType, new RabbitMQResponse<String>(testCustomer.id().toString()), correlationId);
+        var event = new Event(eventType, new RabbitMqResponse<String>(testCustomer.id().toString()), correlationId);
         service.handleTokenValidationProvided(event);
     }
 
     @When("a {string} event with valid=false is received")
     public void tokenValidationProvidedInvalid(String eventType) {
         publishedEvent = new CompletableFuture<>();
-        var event = new Event(eventType, new RabbitMQResponse<String>(400, "Token is invalid"), correlationId);
+        var event = new Event(eventType, new RabbitMqResponse<String>(400, "Token is invalid"), correlationId);
         service.handleTokenValidationProvided(event);
     }
 
@@ -148,7 +148,7 @@ public class PaymentServiceSteps {
         assertEquals(eventType, event.getTopic());
 
         var response = event.getArgumentWithError(0, Payment.class);
-        assertTrue("Expected error status code", response.statusCode() >= 400);
+        assertTrue("Expected error status code", response.getStatusCode() >= 400);
     }
 
     @Then("a {string} event with filtered payments is published")

@@ -11,7 +11,7 @@ import jakarta.ws.rs.WebApplicationException;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
-import messaging.implementations.RabbitMQResponse;
+import messaging.implementations.RabbitMqResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -124,7 +124,7 @@ public final class CustomerFacadeService {
     private void handleTokenProvided(Event event) {
         var collectionType = new TypeToken<List<String>>() {
         };
-        RabbitMQResponse<List<String>> tokensResponse = event.getArgumentWithError(0, collectionType.getType());
+        RabbitMqResponse<List<String>> tokensResponse = event.getArgumentWithError(0, collectionType.getType());
         var correlationId = event.getArgument(1, UUID.class);
 
         var future = tokenRequestsInProgress.get(correlationId);
@@ -143,7 +143,7 @@ public final class CustomerFacadeService {
     private void handleTokenReplenishCompleted(Event event) {
         var collectionType = new TypeToken<List<String>>() {
         };
-        RabbitMQResponse<List<String>> tokensResponse = event.getArgumentWithError(0, collectionType.getType());
+        RabbitMqResponse<List<String>> tokensResponse = event.getArgumentWithError(0, collectionType.getType());
         var correlationId = event.getArgument(1, UUID.class);
         var future = tokenRequestsInProgress.get(correlationId);
         if (future == null) {

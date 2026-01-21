@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 
 import com.google.gson.reflect.TypeToken;
-import messaging.implementations.RabbitMQResponse;
+import messaging.implementations.RabbitMqResponse;
 import utilities.Utils;
 
 public class Event implements Serializable {
@@ -69,8 +69,8 @@ public class Event implements Serializable {
 	/**
 	 * @author s200718
 	 */
-	public <T> RabbitMQResponse<T> getArgumentWithError(int i, Type type) {
-		var token = TypeToken.getParameterized(RabbitMQResponse.class, type);
+	public <T> RabbitMqResponse<T> getArgumentWithError(int i, Type type) {
+		var token = TypeToken.getParameterized(RabbitMqResponse.class, type);
 
 		var gson = new Gson();
 		var jsonString = gson.toJson(arguments[i]);

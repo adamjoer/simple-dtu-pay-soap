@@ -10,7 +10,7 @@ import io.cucumber.java.en.When;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
-import messaging.implementations.RabbitMQResponse;
+import messaging.implementations.RabbitMqResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -77,7 +77,7 @@ public class TokenServiceSteps {
         // Get the token value from the response
         var responseEvent = publishedEvent.join();
 
-        RabbitMQResponse<List<String>> response = responseEvent.getArgumentWithError(0, List.class);
+        RabbitMqResponse<List<String>> response = responseEvent.getArgumentWithError(0, List.class);
         assertFalse("Response contains an error", response.isError());
         var tokens = response.getData();
 
@@ -135,7 +135,7 @@ public class TokenServiceSteps {
     public void eventContainsUniqueTokens(int count) {
         Event event = publishedEvent.join();
 
-        RabbitMQResponse<List<String>> response = event.getArgumentWithError(0, List.class);
+        RabbitMqResponse<List<String>> response = event.getArgumentWithError(0, List.class);
         assertFalse("Response contains an error", response.isError());
 
         var tokens = response.getData();
@@ -157,7 +157,7 @@ public class TokenServiceSteps {
         Event event = publishedEvent.join();
         assertEquals(eventType, event.getTopic());
 
-        RabbitMQResponse<String> response = event.getArgumentWithError(0, String.class);
+        RabbitMqResponse<String> response = event.getArgumentWithError(0, String.class);
         assertFalse("Token should be valid", response.isError());
         assertEquals(customerId.toString(), response.getData());
     }
@@ -167,7 +167,7 @@ public class TokenServiceSteps {
         Event event = publishedEvent.join();
         assertEquals(eventType, event.getTopic());
 
-        RabbitMQResponse<String> response = event.getArgumentWithError(0, String.class);
+        RabbitMqResponse<String> response = event.getArgumentWithError(0, String.class);
         assertTrue("Token should be invalid", response.isError());
     }
 
@@ -176,7 +176,7 @@ public class TokenServiceSteps {
         Event event = publishedEvent.join();
         assertEquals(eventType, event.getTopic());
 
-        RabbitMQResponse<String> response = event.getArgumentWithError(0, String.class);
+        RabbitMqResponse<String> response = event.getArgumentWithError(0, String.class);
         assertFalse("Mark used should succeed", response.isError());
     }
 
@@ -191,7 +191,7 @@ public class TokenServiceSteps {
         var responseEvent = publishedEvent.join();
         assertEquals(TopicNames.TOKEN_VALIDATION_PROVIDED, responseEvent.getTopic());
 
-        RabbitMQResponse<String> response = event.getArgumentWithError(0, String.class);
+        RabbitMqResponse<String> response = event.getArgumentWithError(0, String.class);
         assertTrue("Token should now be invalid (used)", response.isError());
     }
 }

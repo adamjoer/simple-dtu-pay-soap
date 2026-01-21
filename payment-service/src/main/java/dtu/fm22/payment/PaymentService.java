@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
-import messaging.implementations.RabbitMQResponse;
+import messaging.implementations.RabbitMqResponse;
 
 public class PaymentService {
 
@@ -65,12 +65,12 @@ public class PaymentService {
      * @author s215206
      */
     public void handleTokenValidationProvided(Event event) {
-        RabbitMQResponse<String> response = event.getArgumentWithError(0, String.class);
+        RabbitMqResponse<String> response = event.getArgumentWithError(0, String.class);
         var correlationId = event.getArgument(1, UUID.class);
 
         if (response.isError()) {
             // Token invalid - send error response immediately with generic message
-            var errorResponse = new RabbitMQResponse<>(response.statusCode(), response.getErrorMessage());
+            var errorResponse = new RabbitMqResponse<>(response.getStatusCode(), response.getErrorMessage());
             var errorEvent = new Event(TopicNames.PAYMENT_CREATED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;
@@ -134,7 +134,7 @@ public class PaymentService {
                     "from " + customer.firstName() + " to " + merchant.firstName());
         } catch (BankServiceException_Exception e) {
             System.err.println("doPayment: Bank transfer failed: " + e.getMessage());
-            var errorResponse = new RabbitMQResponse<Payment>(400, "Bank transfer failed: " + e.getMessage());
+            var errorResponse = new RabbitMqResponse<Payment>(400, "Bank transfer failed: " + e.getMessage());
             var errorEvent = new Event(TopicNames.PAYMENT_CREATED, errorResponse, paymentId);
             queue.publish(errorEvent);
             return;
@@ -147,7 +147,7 @@ public class PaymentService {
         var markUsedEvent = new Event(TopicNames.TOKEN_MARK_USED_REQUESTED, token, paymentId);
         queue.publish(markUsedEvent);
 
-        Event paymentCreatedEvent = new Event(TopicNames.PAYMENT_CREATED, new RabbitMQResponse<>(payment), paymentId);
+        Event paymentCreatedEvent = new Event(TopicNames.PAYMENT_CREATED, new RabbitMqResponse<>(payment), paymentId);
         queue.publish(paymentCreatedEvent);
     }
 
