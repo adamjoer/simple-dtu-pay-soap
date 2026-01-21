@@ -91,11 +91,18 @@ public class PaymentService {
     }
 
     public void handlePaymentInfoProvided(Event event) {
-        var customer = event.getArgument(0, Customer.class);
-        var merchant = event.getArgument(1, Merchant.class);
-        var correlationId = event.getArgument(2, UUID.class);
+        RabbitMqResponse<PaymentInfo> paymentInfoResponse = event.getArgumentWithError(0, PaymentInfo.class);
+        var correlationId = event.getArgument(1, UUID.class);
 
-        var paymentInfo = new PaymentInfo(customer, merchant);
+        if (paymentInfoResponse.isError()) {
+            // Payment info retrieval failed - send error response immediately
+            var errorResponse = new RabbitMqResponse<>(paymentInfoResponse.getStatusCode(), paymentInfoResponse.getErrorMessage());
+            var errorEvent = new Event(TopicNames.PAYMENT_CREATED, errorResponse, correlationId);
+            queue.publish(errorEvent);
+            return;
+        }
+        var paymentInfo = paymentInfoResponse.getData();
+
         pendingPaymentInfo.put(correlationId, paymentInfo);
 
         // Complete the payment

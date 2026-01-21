@@ -98,7 +98,7 @@ public class PaymentServiceSteps {
         // Step 3: Payment info provided
         publishedEvent = new CompletableFuture<>();
         var paymentInfoEvent = new Event(TopicNames.PAYMENT_INFO_PROVIDED,
-                testCustomer, testMerchant, correlationId);
+                new PaymentInfo(testCustomer, testMerchant), correlationId);
         service.handlePaymentInfoProvided(paymentInfoEvent);
         publishedEvent.join(); // Wait for payment to complete
 
