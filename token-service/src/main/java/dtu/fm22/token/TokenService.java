@@ -225,8 +225,7 @@ public class TokenService {
         }
 
         // Token is valid - return the customerId associated with the token
-        var customerId = token.customerId().toString();
-        var successResponse = new RabbitMqResponse<>(customerId);
+        var successResponse = new RabbitMqResponse<>(token);
         var successEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED, successResponse, correlationId);
         queue.publish(successEvent);
     }
@@ -244,14 +243,14 @@ public class TokenService {
 
         var token = tokenLookup.get(tokenValue);
         if (token == null) {
-            var errorResponse = new RabbitMqResponse<>("Token not found");
+            var errorResponse = new RabbitMqResponse<>(404, "Token not found");
             var errorEvent = new Event(TopicNames.TOKEN_MARK_USED_COMPLETED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;
         }
 
         if (token.used()) {
-            var errorResponse = new RabbitMqResponse<>("Token already marked as used");
+            var errorResponse = new RabbitMqResponse<>(400, "Token already marked as used");
             var errorEvent = new Event(TopicNames.TOKEN_MARK_USED_COMPLETED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;

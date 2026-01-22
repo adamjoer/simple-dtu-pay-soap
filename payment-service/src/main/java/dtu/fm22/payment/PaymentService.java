@@ -25,7 +25,7 @@ public class PaymentService {
 
     private final Map<UUID, PaymentInfo> pendingPaymentInfo = new ConcurrentHashMap<>();
     private final Map<UUID, PaymentRequest> pendingPaymentRequests = new ConcurrentHashMap<>();
-    private final Map<UUID, String> resolvedCustomerIds = new ConcurrentHashMap<>();
+    private final Map<UUID, Token> resolvedTokens = new ConcurrentHashMap<>();
 
     private final MessageQueue queue;
 
@@ -65,7 +65,7 @@ public class PaymentService {
      * @author s215206
      */
     public void handleTokenValidationProvided(Event event) {
-        RabbitMqResponse<String> response = event.getArgumentWithError(0, String.class);
+        RabbitMqResponse<Token> response = event.getArgumentWithError(0, Token.class);
         var correlationId = event.getArgument(1, UUID.class);
 
         if (response.isError()) {
@@ -76,15 +76,15 @@ public class PaymentService {
             return;
         }
 
-        var customerId = response.getData();
+        var token = response.getData();
 
-        // Token is valid - store customerId and request payment info
-        resolvedCustomerIds.put(correlationId, customerId);
+        // Token is valid - store token and request payment info
+        resolvedTokens.put(correlationId, token);
 
         var paymentRequest = pendingPaymentRequests.get(correlationId);
         if (paymentRequest != null) {
             // Step 2: Request user info using resolved customerId
-            var paymentInfoRequest = new PaymentInfoRequest(customerId, paymentRequest.merchantId());
+            var paymentInfoRequest = new PaymentInfoRequest(token.customerId().toString(), paymentRequest.merchantId());
             var paymentInfoEvent = new Event(TopicNames.PAYMENT_INFO_REQUESTED, paymentInfoRequest, correlationId);
             queue.publish(paymentInfoEvent);
         }
@@ -119,10 +119,17 @@ public class PaymentService {
 
         var request = pendingPaymentRequests.get(correlationId);
         var info = pendingPaymentInfo.get(correlationId);
-        var customerId = resolvedCustomerIds.get(correlationId);
+        var token = resolvedTokens.get(correlationId);
 
         // Need all components to complete payment
-        if (request == null || info == null || customerId == null) {
+        if (request == null || info == null || token == null) {
+            return;
+        }
+
+        if (!token.tokenValue().equals(request.token()) || !token.customerId().equals(info.customer().id())) {
+            var errorResponse = new RabbitMqResponse<Payment>(400, "Invalid or missing token");
+            var errorEvent = new Event(TopicNames.PAYMENT_CREATED, errorResponse, correlationId);
+            queue.publish(errorEvent);
             return;
         }
 

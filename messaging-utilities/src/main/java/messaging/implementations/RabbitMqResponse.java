@@ -40,4 +40,13 @@ public class RabbitMqResponse<T> {
     public T getData() {
         return data;
     }
+
+    @Override
+    public String toString() {
+        if (isError()) {
+            return "RabbitMqResponse{error: " + statusCode + " - " + errorMessage + "}";
+        } else {
+            return "RabbitMqResponse{data: " + data + "}";
+        }
+    }
 }

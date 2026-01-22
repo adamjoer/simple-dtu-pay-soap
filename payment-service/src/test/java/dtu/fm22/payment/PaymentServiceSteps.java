@@ -91,7 +91,7 @@ public class PaymentServiceSteps {
         // Step 2: Token validation provided (valid)
         publishedEvent = new CompletableFuture<>();
         var tokenValidationEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                new RabbitMqResponse<String>(testCustomer.id().toString()), correlationId);
+                new RabbitMqResponse<>(new Token(null, testCustomer.id(), false)), correlationId);
         service.handleTokenValidationProvided(tokenValidationEvent);
         publishedEvent.join(); // Wait for payment info request
 
@@ -125,14 +125,15 @@ public class PaymentServiceSteps {
     @When("a {string} event with valid=true is received")
     public void tokenValidationProvidedValid(String eventType) {
         publishedEvent = new CompletableFuture<>();
-        var event = new Event(eventType, new RabbitMqResponse<String>(testCustomer.id().toString()), correlationId);
+        var event = new Event(eventType,
+                new RabbitMqResponse<>(new Token(null, testCustomer.id(), false)), correlationId);
         service.handleTokenValidationProvided(event);
     }
 
     @When("a {string} event with valid=false is received")
     public void tokenValidationProvidedInvalid(String eventType) {
         publishedEvent = new CompletableFuture<>();
-        var event = new Event(eventType, new RabbitMqResponse<String>(400, "Token is invalid"), correlationId);
+        var event = new Event(eventType, new RabbitMqResponse<>(400, "Token is invalid"), correlationId);
         service.handleTokenValidationProvided(event);
     }
 
