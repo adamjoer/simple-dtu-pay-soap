@@ -3,7 +3,7 @@ package messaging.implementations;
 /**
  * @author s200718
  */
-public class RabbitMQResponse<T> {
+public class RabbitMqResponse<T> {
 
     private final boolean success;
     private final int statusCode;
@@ -11,20 +11,14 @@ public class RabbitMQResponse<T> {
 
     private final T data;
 
-    public RabbitMQResponse(String errorMessage) {
-        this.success = false;
-        this.errorMessage = errorMessage;
-        this.statusCode = 500;
-        this.data = null;
-    }
-    public RabbitMQResponse(int statusCode, String errorMessage) {
+    public RabbitMqResponse(int statusCode, String errorMessage) {
         this.success = false;
         this.errorMessage = errorMessage;
         this.statusCode = statusCode;
         this.data = null;
     }
 
-    public RabbitMQResponse(T data) {
+    public RabbitMqResponse(T data) {
         this.success = true;
         this.statusCode = 200;
         this.errorMessage = null;
@@ -35,7 +29,7 @@ public class RabbitMQResponse<T> {
         return !success;
     }
 
-    public int statusCode() {
+    public int getStatusCode() {
         return statusCode;
     }
 
@@ -45,5 +39,14 @@ public class RabbitMQResponse<T> {
 
     public T getData() {
         return data;
+    }
+
+    @Override
+    public String toString() {
+        if (isError()) {
+            return "RabbitMqResponse{error: " + statusCode + " - " + errorMessage + "}";
+        } else {
+            return "RabbitMqResponse{data: " + data + "}";
+        }
     }
 }

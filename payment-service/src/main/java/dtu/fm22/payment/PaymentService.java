@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
-import messaging.implementations.RabbitMQResponse;
+import messaging.implementations.RabbitMqResponse;
 
 public class PaymentService {
 
@@ -25,8 +25,7 @@ public class PaymentService {
 
     private final Map<UUID, PaymentInfo> pendingPaymentInfo = new ConcurrentHashMap<>();
     private final Map<UUID, PaymentRequest> pendingPaymentRequests = new ConcurrentHashMap<>();
-    private final Map<UUID, String> resolvedCustomerIds = new ConcurrentHashMap<>();
-    private final Map<UUID, String> tokenValidationErrors = new ConcurrentHashMap<>();
+    private final Map<UUID, Token> resolvedTokens = new ConcurrentHashMap<>();
 
     private final MessageQueue queue;
 
@@ -66,38 +65,44 @@ public class PaymentService {
      * @author s215206
      */
     public void handleTokenValidationProvided(Event event) {
-        var isValid = event.getArgument(0, Boolean.class);
-        var customerId = event.getArgument(1, String.class);
-        var message = event.getArgument(2, String.class);
-        var correlationId = event.getArgument(3, UUID.class);
+        RabbitMqResponse<Token> response = event.getArgumentWithError(0, Token.class);
+        var correlationId = event.getArgument(1, UUID.class);
 
-        if (!isValid) {
+        if (response.isError()) {
             // Token invalid - send error response immediately with generic message
-            tokenValidationErrors.put(correlationId, message);
-            var errorResponse = new RabbitMQResponse<Payment>(400, "Invalid or used token");
+            var errorResponse = new RabbitMqResponse<>(response.getStatusCode(), response.getErrorMessage());
             var errorEvent = new Event(TopicNames.PAYMENT_CREATED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;
         }
 
-        // Token is valid - store customerId and request payment info
-        resolvedCustomerIds.put(correlationId, customerId);
+        var token = response.getData();
+
+        // Token is valid - store token and request payment info
+        resolvedTokens.put(correlationId, token);
 
         var paymentRequest = pendingPaymentRequests.get(correlationId);
         if (paymentRequest != null) {
             // Step 2: Request user info using resolved customerId
-            var paymentInfoRequest = new PaymentInfoRequest(customerId, paymentRequest.merchantId());
+            var paymentInfoRequest = new PaymentInfoRequest(token.customerId().toString(), paymentRequest.merchantId());
             var paymentInfoEvent = new Event(TopicNames.PAYMENT_INFO_REQUESTED, paymentInfoRequest, correlationId);
             queue.publish(paymentInfoEvent);
         }
     }
 
     public void handlePaymentInfoProvided(Event event) {
-        var customer = event.getArgument(0, Customer.class);
-        var merchant = event.getArgument(1, Merchant.class);
-        var correlationId = event.getArgument(2, UUID.class);
+        RabbitMqResponse<PaymentInfo> paymentInfoResponse = event.getArgumentWithError(0, PaymentInfo.class);
+        var correlationId = event.getArgument(1, UUID.class);
 
-        var paymentInfo = new PaymentInfo(customer, merchant);
+        if (paymentInfoResponse.isError()) {
+            // Payment info retrieval failed - send error response immediately
+            var errorResponse = new RabbitMqResponse<>(paymentInfoResponse.getStatusCode(), paymentInfoResponse.getErrorMessage());
+            var errorEvent = new Event(TopicNames.PAYMENT_CREATED, errorResponse, correlationId);
+            queue.publish(errorEvent);
+            return;
+        }
+        var paymentInfo = paymentInfoResponse.getData();
+
         pendingPaymentInfo.put(correlationId, paymentInfo);
 
         // Complete the payment
@@ -114,10 +119,17 @@ public class PaymentService {
 
         var request = pendingPaymentRequests.get(correlationId);
         var info = pendingPaymentInfo.get(correlationId);
-        var customerId = resolvedCustomerIds.get(correlationId);
+        var token = resolvedTokens.get(correlationId);
 
         // Need all components to complete payment
-        if (request == null || info == null || customerId == null) {
+        if (request == null || info == null || token == null) {
+            return;
+        }
+
+        if (!token.tokenValue().equals(request.token()) || !token.customerId().equals(info.customer().id())) {
+            var errorResponse = new RabbitMqResponse<Payment>(400, "Invalid or missing token");
+            var errorEvent = new Event(TopicNames.PAYMENT_CREATED, errorResponse, correlationId);
+            queue.publish(errorEvent);
             return;
         }
 
@@ -136,6 +148,9 @@ public class PaymentService {
                     "from " + customer.firstName() + " to " + merchant.firstName());
         } catch (BankServiceException_Exception e) {
             System.err.println("doPayment: Bank transfer failed: " + e.getMessage());
+            var errorResponse = new RabbitMqResponse<Payment>(400, "Bank transfer failed: " + e.getMessage());
+            var errorEvent = new Event(TopicNames.PAYMENT_CREATED, errorResponse, paymentId);
+            queue.publish(errorEvent);
             return;
         }
 
@@ -143,12 +158,10 @@ public class PaymentService {
         payments.put(paymentId, payment);
 
         // Mark token as used after successful payment
-        if (token != null && !token.isEmpty()) {
-            var markUsedEvent = new Event(TopicNames.TOKEN_MARK_USED_REQUESTED, token, paymentId);
-            queue.publish(markUsedEvent);
-        }
+        var markUsedEvent = new Event(TopicNames.TOKEN_MARK_USED_REQUESTED, token, paymentId);
+        queue.publish(markUsedEvent);
 
-        Event paymentCreatedEvent = new Event(TopicNames.PAYMENT_CREATED, new RabbitMQResponse<>(payment), paymentId);
+        Event paymentCreatedEvent = new Event(TopicNames.PAYMENT_CREATED, new RabbitMqResponse<>(payment), paymentId);
         queue.publish(paymentCreatedEvent);
     }
 

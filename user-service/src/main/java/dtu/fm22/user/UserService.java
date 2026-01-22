@@ -4,10 +4,12 @@ import dtu.fm22.user.exceptions.CustomerNotFoundException;
 import dtu.fm22.user.exceptions.MerchantNotFoundException;
 import dtu.fm22.user.record.Customer;
 import dtu.fm22.user.record.Merchant;
+import dtu.fm22.user.record.PaymentInfo;
 import dtu.fm22.user.record.PaymentInfoRequest;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
+import messaging.implementations.RabbitMqResponse;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -72,8 +74,15 @@ public class UserService {
      */
     public void handleUnregisterCustomer(Event event) {
         var id = event.getArgument(0, String.class);
-        unregisterCustomer(id);
-        var customerEvent = new Event(TopicNames.CUSTOMER_UNREGISTRATION_COMPLETED, id);
+        try {
+            unregisterCustomer(id);
+        } catch (CustomerNotFoundException e) {
+            var errorResponse = new RabbitMqResponse<>(404, e.getMessage());
+            var errorEvent = new Event(TopicNames.CUSTOMER_UNREGISTRATION_COMPLETED, errorResponse);
+            queue.publish(errorEvent);
+            return;
+        }
+        var customerEvent = new Event(TopicNames.CUSTOMER_UNREGISTRATION_COMPLETED, new RabbitMqResponse<>(id));
         queue.publish(customerEvent);
     }
 
@@ -115,8 +124,15 @@ public class UserService {
      */
     public void handleUnregisterMerchant(Event event) {
         var id = event.getArgument(0, String.class);
-        unregisterMerchant(id);
-        var merchantEvent = new Event(TopicNames.MERCHANT_UNREGISTRATION_COMPLETED, id);
+        try {
+            unregisterMerchant(id);
+        } catch (MerchantNotFoundException e) {
+            var errorResponse = new RabbitMqResponse<>(404, e.getMessage());
+            var errorEvent = new Event(TopicNames.MERCHANT_UNREGISTRATION_COMPLETED, errorResponse);
+            queue.publish(errorEvent);
+            return;
+        }
+        var merchantEvent = new Event(TopicNames.MERCHANT_UNREGISTRATION_COMPLETED, new RabbitMqResponse<>(id));
         queue.publish(merchantEvent);
     }
 
@@ -153,16 +169,26 @@ public class UserService {
         var paymentInfoRequest = event.getArgument(0, PaymentInfoRequest.class);
         var correlationId = event.getArgument(1, UUID.class);
 
-        try {
-            var customer = getByCustomerId(paymentInfoRequest.customerId()).orElse(null);
-            var merchant = getMerchantById(paymentInfoRequest.merchantId()).orElse(null);
-
-            var paymentInfoProvidedEvent = new Event(TopicNames.PAYMENT_INFO_PROVIDED, customer, merchant, correlationId);
-            queue.publish(paymentInfoProvidedEvent);
-
-        } catch (IllegalArgumentException e) {
-            System.err.println("handlePaymentInfoRequested: Invalid UUID format in payment info request");
+        var customer = getByCustomerId(paymentInfoRequest.customerId());
+        if (customer.isEmpty()) {
+            var errorResponse = new RabbitMqResponse<Customer>(404, "Customer with ID " + paymentInfoRequest.customerId() + " not found");
+            var errorEvent = new Event(TopicNames.PAYMENT_INFO_PROVIDED, errorResponse, correlationId);
+            queue.publish(errorEvent);
+            return;
         }
+
+        var merchant = getMerchantById(paymentInfoRequest.merchantId());
+        if (merchant.isEmpty()) {
+            var errorResponse = new RabbitMqResponse<Merchant>(404, "Merchant with ID " + paymentInfoRequest.merchantId() + " not found");
+            var errorEvent = new Event(TopicNames.PAYMENT_INFO_PROVIDED, errorResponse, correlationId);
+            queue.publish(errorEvent);
+            return;
+        }
+
+        var response = new RabbitMqResponse<>(new PaymentInfo(customer.get(), merchant.get()));
+        var paymentInfoProvidedEvent = new Event(TopicNames.PAYMENT_INFO_PROVIDED, response, correlationId);
+        queue.publish(paymentInfoProvidedEvent);
+
     }
 
     /**

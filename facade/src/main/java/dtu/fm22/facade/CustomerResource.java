@@ -69,15 +69,11 @@ public class CustomerResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public java.util.List<String> requestTokens(@PathParam("id") String id, @Valid TokenRequest tokenRequest) {
-        try {
-            // Ensure the customerId in the request matches the path parameter
-            if (!tokenRequest.customerId().equals(id)) {
-                throw new BadRequestException("Customer ID in path does not match request body");
-            }
-            return customerFacadeService.requestTokens(id, tokenRequest.numberOfTokens());
-        } catch (RuntimeException e) {
-            throw new BadRequestException("Failed to request tokens: " + e.getMessage());
+        // Ensure the customerId in the request matches the path parameter
+        if (!tokenRequest.customerId().equals(id)) {
+            throw new BadRequestException("Customer ID in path does not match request body");
         }
+        return customerFacadeService.requestTokens(id, tokenRequest.numberOfTokens());
     }
 
     /**
@@ -87,6 +83,7 @@ public class CustomerResource {
     @Path("/{id}/reports")
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Payment> getReport(@PathParam("id") String id) {
-        return managerFacadeService.getCustomerReport(id).orElseThrow(() -> new NotFoundException("Customer not found"));
+        return managerFacadeService.getCustomerReport(id).orElseThrow(() -> new NotFoundException("Customer not " +
+                "found"));
     }
 }

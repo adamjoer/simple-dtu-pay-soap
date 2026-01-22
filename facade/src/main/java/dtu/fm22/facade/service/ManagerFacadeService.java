@@ -14,6 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
+/**
+ * @author s242575
+ */
 public class ManagerFacadeService {
 
     private final MessageQueue queue;
@@ -37,7 +40,7 @@ public class ManagerFacadeService {
     }
 
     /**
-     * @author s200718, s205135, s232268
+     * @author s242575,s200718, s205135, s232268
      */
     public Optional<Collection<Payment>> getCustomerReport(String id) {
         var maybeCustomer = customerFacadeService.getById(id);
@@ -54,7 +57,7 @@ public class ManagerFacadeService {
     }
 
     /**
-     * @author s200718, s205135, s232268
+     * @author s242575,s200718, s205135, s232268
      */
     public Optional<Collection<Payment>> getMerchantReport(String id) {
         var maybeMerchant = merchantFacadeService.getById(id);
@@ -71,7 +74,7 @@ public class ManagerFacadeService {
     }
 
     /**
-     * @author s200718, s205135
+     * @author s242575,s200718, s205135
      */
     public Collection<Payment> getManagerReport() {
         var correlationId = UUID.randomUUID();
@@ -83,7 +86,7 @@ public class ManagerFacadeService {
     }
 
     /**
-     * @author s200718, s205135
+     * @author s242575,s200718, s205135
      */
     public void handleReportProvided(Event event) {
         var collectionType = new TypeToken<Collection<Payment>>() {

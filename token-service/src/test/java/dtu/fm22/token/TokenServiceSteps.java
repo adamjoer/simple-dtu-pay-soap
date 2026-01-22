@@ -1,5 +1,6 @@
 package dtu.fm22.token;
 
+import dtu.fm22.token.record.Token;
 import dtu.fm22.token.record.TokenRequest;
 import dtu.fm22.token.record.TokenValidationRequest;
 import io.cucumber.java.Before;
@@ -10,6 +11,7 @@ import io.cucumber.java.en.When;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
+import messaging.implementations.RabbitMqResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,12 +21,12 @@ import java.util.function.Consumer;
 import static org.junit.Assert.*;
 
 /**
- * @author s215206
+ * @author s242576,s215206
  */
 public class TokenServiceSteps {
 
     private CompletableFuture<Event> publishedEvent;
-    
+
     private MessageQueue queue = new MessageQueue() {
         @Override
         public void publish(Event event) {
@@ -35,7 +37,7 @@ public class TokenServiceSteps {
         public void addHandler(String eventType, Consumer<Event> handler) {
         }
     };
-    
+
     private TokenService service = new TokenService(queue);
     private UUID customerId;
     private UUID correlationId;
@@ -72,12 +74,15 @@ public class TokenServiceSteps {
         var request = new TokenRequest(customerId.toString(), 1);
         var event = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_REQUESTED, request, correlationId);
         service.handleTokenReplenishRequested(event);
-        
+
         // Get the token value from the response
         var responseEvent = publishedEvent.join();
-        @SuppressWarnings("unchecked")
-        List<String> tokens = responseEvent.getArgument(0, List.class);
-        tokenValue = tokens.get(0);
+
+        RabbitMqResponse<List<String>> response = responseEvent.getArgumentWithError(0, List.class);
+        assertFalse("Response contains an error", response.isError());
+        var tokens = response.getData();
+
+        tokenValue = tokens.getFirst();
         publishedEvent = new CompletableFuture<>();
         correlationId = UUID.randomUUID();
     }
@@ -86,7 +91,7 @@ public class TokenServiceSteps {
     public void aCustomerHasAUsedToken() {
         // First create a token
         aCustomerHasAValidUnusedToken();
-        
+
         // Mark it as used
         var markUsedEvent = new Event(TopicNames.TOKEN_MARK_USED_REQUESTED, tokenValue, correlationId);
         service.handleTokenMarkUsedRequested(markUsedEvent);
@@ -130,9 +135,11 @@ public class TokenServiceSteps {
     @Then("the event contains {int} unique tokens")
     public void eventContainsUniqueTokens(int count) {
         Event event = publishedEvent.join();
-        
-        @SuppressWarnings("unchecked")
-        List<String> tokens = event.getArgument(0, List.class);
+
+        RabbitMqResponse<List<String>> response = event.getArgumentWithError(0, List.class);
+        assertFalse("Response contains an error", response.isError());
+
+        var tokens = response.getData();
         assertEquals(count, tokens.size());
         assertEquals("Tokens should be unique", count, tokens.stream().distinct().count());
     }
@@ -141,40 +148,37 @@ public class TokenServiceSteps {
     public void eventIsSentWithError(String eventType) {
         Event event = publishedEvent.join();
         assertEquals(eventType, event.getTopic());
-        
-        // Check that the first argument is a String (error message) rather than a List
-        var argument = event.getArgument(0, Object.class);
-        assertTrue("Expected error message as String", argument instanceof String);
+
+        var response = event.getArgumentWithError(0, Object.class);
+        assertNotNull("Expected error message as String", response.getErrorMessage());
     }
 
     @Then("the {string} event is sent with valid=true and customerId")
     public void eventIsSentWithValidTrue(String eventType) {
         Event event = publishedEvent.join();
         assertEquals(eventType, event.getTopic());
-        
-        var isValid = event.getArgument(0, Boolean.class);
-        var returnedCustomerId = event.getArgument(1, String.class);
-        
-        assertTrue("Token should be valid", isValid);
-        assertEquals(customerId.toString(), returnedCustomerId);
+
+        RabbitMqResponse<Token> response = event.getArgumentWithError(0, Token.class);
+        assertFalse("Token should be valid", response.isError());
+        assertEquals(customerId, response.getData().customerId());
     }
 
     @Then("the {string} event is sent with valid=false")
     public void eventIsSentWithValidFalse(String eventType) {
         Event event = publishedEvent.join();
         assertEquals(eventType, event.getTopic());
-        
-        var isValid = event.getArgument(0, Boolean.class);
-        assertFalse("Token should be invalid", isValid);
+
+        RabbitMqResponse<Token> response = event.getArgumentWithError(0, Token.class);
+        assertTrue("Token should be invalid", response.isError());
     }
 
     @Then("the {string} event is sent with success=true")
     public void eventIsSentWithSuccessTrue(String eventType) {
         Event event = publishedEvent.join();
         assertEquals(eventType, event.getTopic());
-        
-        var success = event.getArgument(0, Boolean.class);
-        assertTrue("Mark used should succeed", success);
+
+        RabbitMqResponse<Boolean> response = event.getArgumentWithError(0, Boolean.class);
+        assertFalse("Mark used should succeed", response.isError());
     }
 
     @And("the token is marked as used")
@@ -182,13 +186,15 @@ public class TokenServiceSteps {
         // Verify by trying to validate the token - it should fail
         publishedEvent = new CompletableFuture<>();
         var validationRequest = new TokenValidationRequest(tokenValue);
-        var event = new Event(TopicNames.TOKEN_VALIDATION_REQUESTED, validationRequest, UUID.randomUUID());
+        var event = new Event(TopicNames.TOKEN_VALIDATION_REQUESTED, validationRequest, correlationId);
         service.handleTokenValidationRequested(event);
-        
+
         var responseEvent = publishedEvent.join();
         assertEquals(TopicNames.TOKEN_VALIDATION_PROVIDED, responseEvent.getTopic());
-        
-        var isValid = responseEvent.getArgument(0, Boolean.class);
-        assertFalse("Token should now be invalid (used)", isValid);
+        assertEquals(correlationId, responseEvent.getArgument(1, UUID.class));
+
+        RabbitMqResponse<Token> response = responseEvent.getArgumentWithError(0, Token.class);
+        assertTrue("Token should now be invalid (used)", response.isError());
+        assertEquals("Token has already been used", response.getErrorMessage());
     }
 }

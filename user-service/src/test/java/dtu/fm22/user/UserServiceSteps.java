@@ -2,6 +2,7 @@ package dtu.fm22.user;
 
 import dtu.fm22.user.record.Customer;
 import dtu.fm22.user.record.Merchant;
+import dtu.fm22.user.record.PaymentInfo;
 import dtu.fm22.user.record.PaymentInfoRequest;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
@@ -10,6 +11,7 @@ import io.cucumber.java.en.When;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
+import messaging.implementations.RabbitMqResponse;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -23,7 +25,7 @@ import static org.junit.Assert.*;
 public class UserServiceSteps {
 
     private CompletableFuture<Event> publishedEvent;
-    
+
     private MessageQueue queue = new MessageQueue() {
         @Override
         public void publish(Event event) {
@@ -34,7 +36,7 @@ public class UserServiceSteps {
         public void addHandler(String eventType, Consumer<Event> handler) {
         }
     };
-    
+
     private UserService service = new UserService(queue);
     private UUID correlationId;
     private Customer registeredCustomer;
@@ -52,7 +54,7 @@ public class UserServiceSteps {
         var customer = new Customer(null, "John", "Doe", "123456-7890", "bank123");
         var event = new Event(TopicNames.CUSTOMER_REGISTRATION_REQUESTED, customer, correlationId);
         service.handleRegisterCustomer(event);
-        
+
         var responseEvent = publishedEvent.join();
         registeredCustomer = responseEvent.getArgument(0, Customer.class);
         publishedEvent = new CompletableFuture<>();
@@ -67,7 +69,7 @@ public class UserServiceSteps {
         var customerEvent = new Event(TopicNames.CUSTOMER_REGISTRATION_REQUESTED, customer, correlationId);
         service.handleRegisterCustomer(customerEvent);
         registeredCustomer = publishedEvent.join().getArgument(0, Customer.class);
-        
+
         // Register merchant
         publishedEvent = new CompletableFuture<>();
         correlationId = UUID.randomUUID();
@@ -75,7 +77,7 @@ public class UserServiceSteps {
         var merchantEvent = new Event(TopicNames.MERCHANT_REGISTRATION_REQUESTED, merchant, correlationId);
         service.handleRegisterMerchant(merchantEvent);
         registeredMerchant = publishedEvent.join().getArgument(0, Merchant.class);
-        
+
         publishedEvent = new CompletableFuture<>();
         correlationId = UUID.randomUUID();
     }
@@ -146,7 +148,7 @@ public class UserServiceSteps {
     public void eventIsSentWithCustomerData(String eventType) {
         Event event = publishedEvent.join();
         assertEquals(eventType, event.getTopic());
-        
+
         var customer = event.getArgument(0, Customer.class);
         assertNotNull("Customer should not be null", customer);
         assertEquals(registeredCustomer.id(), customer.id());
@@ -157,7 +159,7 @@ public class UserServiceSteps {
     public void eventIsSentWithNullCustomer(String eventType) {
         Event event = publishedEvent.join();
         assertEquals(eventType, event.getTopic());
-        
+
         var customer = event.getArgument(0, Customer.class);
         assertNull("Customer should be null for non-existing customer", customer);
     }
@@ -166,10 +168,14 @@ public class UserServiceSteps {
     public void eventIsSentWithCustomerAndMerchantData(String eventType) {
         Event event = publishedEvent.join();
         assertEquals(eventType, event.getTopic());
-        
-        var customer = event.getArgument(0, Customer.class);
-        var merchant = event.getArgument(1, Merchant.class);
-        
+
+        RabbitMqResponse<PaymentInfo> response = event.getArgumentWithError(0, PaymentInfo.class);
+
+        assertFalse("Response should not be an error", response.isError());
+        var paymentInfo = response.getData();
+        var customer = paymentInfo.customer();
+        var merchant = paymentInfo.merchant();
+
         assertNotNull("Customer should not be null", customer);
         assertNotNull("Merchant should not be null", merchant);
         assertEquals(registeredCustomer.id(), customer.id());

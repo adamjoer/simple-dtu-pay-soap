@@ -35,7 +35,7 @@ Feature: Token Management
     And the merchant is registered with Simple DTU Pay using their bank account
     When the customer initiates a payment for "50" kr using an invalid token
     Then the payment fails
-    And the error message is "Invalid or used token"
+    And the error message is "Token not found"
     And the balance of the customer at the bank is "2000" kr
     And the balance of the merchant at the bank is "800" kr
 
