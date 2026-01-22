@@ -6,6 +6,7 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import static org.junit.Assert.*;
 
@@ -56,6 +57,50 @@ public class PaymentServiceSteps {
                 "Expected balance " + amountBigDecimal + " but was " + balance,
                 0, amountBigDecimal.compareTo(balance)
         );
+    }
+
+    @When("the customer initiates a payment for {string} kr to an unknown merchant using a token")
+    public void theCustomerInitiatesAPaymentToUnknownMerchantUsingAToken(String amount) {
+        assertNotNull(state.tokens);
+        assertFalse("Customer must have tokens to make a payment", state.tokens.isEmpty());
+        var token = state.tokens.getFirst();
+        try {
+            // Use a random UUID as the unknown merchant ID
+            successful = paymentService.pay(amount, UUID.randomUUID(), token);
+        } catch (Exception e) {
+            successful = false;
+            errorMessage = e.getMessage();
+        }
+        state.tokens.remove(token);
+    }
+
+    @Then("the payment fails")
+    public void thePaymentFails() {
+        assertFalse("Expected payment to fail, but it succeeded", successful);
+    }
+
+    @Then("the error message is {string}")
+    public void theErrorMessageIs(String expectedMessage) {
+        assertNotNull("Error message should not be null", errorMessage);
+        assertEquals(expectedMessage, errorMessage);
+    }
+
+    @Then("the error message contains {string}")
+    public void theErrorMessageContains(String expectedMessage) {
+        assertNotNull("Error message should not be null", errorMessage);
+        assertTrue("Expected error message to contain '" + expectedMessage + "' but was: " + errorMessage,
+                errorMessage.toLowerCase().contains(expectedMessage.toLowerCase()));
+    }
+
+    @When("the customer initiates a payment for {string} kr using an invalid token")
+    public void theCustomerInitiatesAPaymentUsingAnInvalidToken(String amount) {
+        var invalidToken = "invalid-token-" + UUID.randomUUID();
+        try {
+            successful = paymentService.pay(amount, state.merchant.id, invalidToken);
+        } catch (Exception e) {
+            successful = false;
+            errorMessage = e.getMessage();
+        }
     }
 
 }

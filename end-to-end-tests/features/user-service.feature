@@ -25,3 +25,19 @@ Feature: User management
     When a request is made for a non-existing merchant's profile information
     Then the profile retrieval fails
     Then an error message "Merchant not found" is returned
+
+  Scenario: Customer deregistration
+    Given a customer with name "ToDelete", last name "Customer", and CPR "777777-7777"
+    And the customer is registered with the bank with an initial balance of "1000" kr
+    And the customer is registered with Simple DTU Pay using their bank account
+    When the customer deregisters from Simple DTU Pay
+    Then the deregistration is successful
+    And the customer profile is no longer accessible
+
+  Scenario: Merchant deregistration
+    Given a merchant with name "ToDelete", last name "Merchant", and CPR "888888-8888"
+    And the merchant is registered with the bank with an initial balance of "1000" kr
+    And the merchant is registered with Simple DTU Pay using their bank account
+    When the merchant deregisters from Simple DTU Pay
+    Then the deregistration is successful
+    And the merchant profile is no longer accessible

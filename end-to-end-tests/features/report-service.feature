@@ -14,3 +14,20 @@ Feature: Report management
     Then the merchant report includes a transaction of "250" kr to "Eve Adams" and contains no customer information
     When the customer requests a transaction report
     Then the customer report includes a transaction of "250" kr from "Frank Miller" to "Eve Adams"
+
+  Scenario: Manager requests a complete transaction report
+    Given a customer with name "Alice", last name "Test", and CPR "999999-9999"
+    And the customer is registered with the bank with an initial balance of "2000" kr
+    And the customer is registered with Simple DTU Pay using their bank account
+    And the customer has 2 unused tokens
+    And a merchant with name "Bob", last name "Shop", and CPR "101010-1010"
+    And the merchant is registered with the bank with an initial balance of "500" kr
+    And the merchant is registered with Simple DTU Pay using their bank account
+    When the customer initiates a payment for "100" kr using a token
+    Then the payment is successful
+    When the customer initiates a payment for "200" kr using a token
+    Then the payment is successful
+    When the manager requests a transaction report
+    Then the manager report includes at least 2 transactions
+    And the manager report includes a transaction of "100" kr from "Alice Test" to "Bob Shop"
+    And the manager report includes a transaction of "200" kr from "Alice Test" to "Bob Shop"
