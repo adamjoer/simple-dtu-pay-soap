@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 import static org.junit.Assert.*;
 
 /**
- * @author s215206
+ * @author s242576,s215206
  */
 public class TokenServiceSteps {
 
