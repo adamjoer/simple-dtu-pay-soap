@@ -13,6 +13,9 @@ import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
 
+/**
+ * @author s242576
+ */
 public class TokenService {
 
     private static final int MAX_UNUSED_TOKENS = 6;
@@ -40,6 +43,10 @@ public class TokenService {
     /**
      * Generates a unique, non-guessable token
      */
+
+    /**
+     * @author s242576
+     */
     private String generateToken() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder token = new StringBuilder(TOKEN_LENGTH);
@@ -51,6 +58,10 @@ public class TokenService {
 
     /**
      * Handles token replenishment request (requesting new tokens)
+     */
+
+    /**
+     * @author s242576
      */
     public void handleTokenReplenishRequested(Event event) {
         var tokenRequest = event.getArgument(0, TokenRequest.class);
@@ -132,6 +143,11 @@ public class TokenService {
     /**
      * Handles token request (get existing unused tokens)
      */
+
+
+    /**
+     * @author s242576
+     */
     public void handleTokenRequested(Event event) {
         System.out.format("TokenService: Received CUSTOMER_TOKEN_REQUESTED event: %s%n", event);
         var customerIdStr = event.getArgument(0, String.class);
@@ -160,6 +176,10 @@ public class TokenService {
     /**
      * Handles token validation request (check if token is valid)
      * Returns the customerId associated with the token in the response
+     */
+
+    /**
+     * @author s242576
      */
     public void handleTokenValidationRequested(Event event) {
         var validationRequest = event.getArgument(0, TokenValidationRequest.class);
@@ -193,6 +213,10 @@ public class TokenService {
 
     /**
      * Handles request to mark a token as used
+     */
+
+    /**
+     * @author s242576
      */
     public void handleTokenMarkUsedRequested(Event event) {
         var tokenValue = event.getArgument(0, String.class);
