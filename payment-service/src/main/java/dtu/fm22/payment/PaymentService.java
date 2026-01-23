@@ -17,6 +17,9 @@ import messaging.MessageQueue;
 import messaging.TopicNames;
 import messaging.implementations.RabbitMqResponse;
 
+/**
+ * @author s205135, s200718, s215206
+ */
 public class PaymentService {
 
     private final ConcurrentHashMap<UUID, Payment> payments = new ConcurrentHashMap<>();

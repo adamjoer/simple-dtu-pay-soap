@@ -64,36 +64,34 @@ public class PaymentServiceSteps {
         var paymentRequest = new PaymentRequest(testMerchant.id().toString(), "100.00", testToken);
         var event = new Event(TopicNames.PAYMENT_REQUESTED, paymentRequest, correlationId);
         service.handlePaymentRequested(event);
-        publishedEvent = new CompletableFuture<>(); // Reset for next event
+        publishedEvent = new CompletableFuture<>();
     }
 
     @Given("completed payments for a customer")
     public void completedPaymentsForACustomer() throws Exception {
-        // Create a completed payment by simulating the full flow
         createCompletedPayment();
     }
 
     @Given("completed payments for a merchant")
     public void completedPaymentsForAMerchant() throws Exception {
-        // Create a completed payment by simulating the full flow
         createCompletedPayment();
     }
 
     private void createCompletedPayment() throws Exception {
-        // Step 1: Payment requested
+        // Payment requested
         publishedEvent = new CompletableFuture<>();
         var paymentRequest = new PaymentRequest(testMerchant.id().toString(), "100.00", testToken);
         var paymentRequestEvent = new Event(TopicNames.PAYMENT_REQUESTED, paymentRequest, correlationId);
         service.handlePaymentRequested(paymentRequestEvent);
 
-        // Step 2: Token validation provided (valid)
+        // Token validation provided
         publishedEvent = new CompletableFuture<>();
         var tokenValidationEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
                 new RabbitMqResponse<>(new Token(null, testCustomer.id(), false)), correlationId);
         service.handleTokenValidationProvided(tokenValidationEvent);
-        publishedEvent.join(); // Wait for payment info request
+        publishedEvent.join(); // Wait for payment info
 
-        // Step 3: Payment info provided
+        // Payment info provided
         publishedEvent = new CompletableFuture<>();
         var paymentInfoEvent = new Event(TopicNames.PAYMENT_INFO_PROVIDED,
                 new PaymentInfo(testCustomer, testMerchant), correlationId);

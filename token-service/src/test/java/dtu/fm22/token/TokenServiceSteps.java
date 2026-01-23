@@ -58,8 +58,8 @@ public class TokenServiceSteps {
         var event = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_REQUESTED, request, correlationId);
         service.handleTokenReplenishRequested(event);
         publishedEvent.join(); // Wait for it to complete
-        publishedEvent = new CompletableFuture<>(); // Reset for the next event
-        correlationId = UUID.randomUUID(); // New correlation ID for the actual test
+        publishedEvent = new CompletableFuture<>();
+        correlationId = UUID.randomUUID();
     }
 
     @Given("a customer has {int} unused token")
@@ -89,10 +89,8 @@ public class TokenServiceSteps {
 
     @Given("a customer has a used token")
     public void aCustomerHasAUsedToken() {
-        // First create a token
         aCustomerHasAValidUnusedToken();
 
-        // Mark it as used
         var markUsedEvent = new Event(TopicNames.TOKEN_MARK_USED_REQUESTED, tokenValue, correlationId);
         service.handleTokenMarkUsedRequested(markUsedEvent);
         publishedEvent.join(); // Wait for completion
