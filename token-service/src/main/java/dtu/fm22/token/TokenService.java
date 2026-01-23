@@ -1,5 +1,6 @@
 package dtu.fm22.token;
 
+import dtu.fm22.token.record.PaymentRequest;
 import dtu.fm22.token.record.Token;
 import dtu.fm22.token.record.TokenRequest;
 import dtu.fm22.token.record.TokenValidationRequest;
@@ -38,14 +39,13 @@ public class TokenService {
         this.queue.addHandler(TopicNames.CUSTOMER_TOKEN_REPLENISH_REQUESTED, this::handleTokenReplenishRequested);
         this.queue.addHandler(TopicNames.CUSTOMER_TOKEN_REQUESTED, this::handleTokenRequested);
         this.queue.addHandler(TopicNames.TOKEN_VALIDATION_REQUESTED, this::handleTokenValidationRequested);
+        this.queue.addHandler(TopicNames.PAYMENT_REQUESTED, this::handleTokenValidationRequested);
         this.queue.addHandler(TopicNames.TOKEN_MARK_USED_REQUESTED, this::handleTokenMarkUsedRequested);
     }
 
     /**
      * Generates a unique, non-guessable token
-     */
-
-    /**
+     *
      * @author s242576
      */
     private String generateToken() {
@@ -196,16 +196,28 @@ public class TokenService {
     /**
      * Handles token validation request (check if token is valid)
      * Returns the customerId associated with the token in the response
-     */
-
-    /**
-     * @author s242576
+     *
+     * @author s242576, s200718
      */
     public void handleTokenValidationRequested(Event event) {
-        var validationRequest = event.getArgument(0, TokenValidationRequest.class);
+
+        String tokenValue;
+        switch (event.getTopic()) {
+            case TopicNames.TOKEN_VALIDATION_REQUESTED:
+                var tokenValidationRequest = event.getArgument(0, TokenValidationRequest.class);
+                tokenValue = tokenValidationRequest.tokenValue();
+                break;
+            case TopicNames.PAYMENT_REQUESTED:
+                var paymentRequest = event.getArgument(0, PaymentRequest.class);
+                tokenValue = paymentRequest.token();
+                break;
+            default:
+                // Unknown topic
+                return;
+        }
+
         var correlationId = event.getArgument(1, UUID.class);
 
-        var tokenValue = validationRequest.tokenValue();
         var token = tokenLookup.get(tokenValue);
 
         if (token == null) {
@@ -232,9 +244,7 @@ public class TokenService {
 
     /**
      * Handles request to mark a token as used
-     */
-
-    /**
+     *
      * @author s242576
      */
     public void handleTokenMarkUsedRequested(Event event) {

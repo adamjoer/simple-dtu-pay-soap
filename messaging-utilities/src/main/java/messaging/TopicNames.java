@@ -22,7 +22,6 @@ public class TopicNames {
     public static final String MERCHANT_INFO_REQUESTED = "MerchantInfoRequested";
     public static final String MERCHANT_INFO_PROVIDED = "MerchantInfoProvided";
 
-
     public static final String PAYMENT_CREATED = "PaymentCreated";
     public static final String PAYMENT_REQUESTED = "PaymentRequested";
 

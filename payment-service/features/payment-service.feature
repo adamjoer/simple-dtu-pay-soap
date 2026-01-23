@@ -1,8 +1,5 @@
 Feature: Payment Service
 
-  Scenario: Payment request initiates token validation
-    When a "PaymentRequested" event is received
-    Then a "TokenValidationRequested" event is published
 
   Scenario: Valid token triggers payment info request
     Given a pending payment request

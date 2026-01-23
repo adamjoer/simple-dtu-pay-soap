@@ -54,11 +54,6 @@ public class PaymentService {
 
         // Store the payment request
         pendingPaymentRequests.put(correlationId, paymentRequest);
-
-        // Request token validation (this will return customerId)
-        var tokenValidationRequest = new TokenValidationRequest(paymentRequest.token());
-        var tokenValidationEvent = new Event(TopicNames.TOKEN_VALIDATION_REQUESTED, tokenValidationRequest, correlationId);
-        queue.publish(tokenValidationEvent);
     }
 
     /**
