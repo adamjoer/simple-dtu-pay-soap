@@ -8,8 +8,8 @@ public record Payment(
         Customer customer,
         Merchant merchant,
         BigDecimal amount,
-        String timestamp,
-        String token
+        String token,
+        String timestamp
 ) {
 
     @Override
