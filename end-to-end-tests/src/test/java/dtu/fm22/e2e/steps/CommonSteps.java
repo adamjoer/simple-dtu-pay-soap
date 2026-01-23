@@ -16,8 +16,13 @@ import java.math.BigDecimal;
 
 import static org.junit.Assert.*;
 
+/**
+ * @author s200718, s215206, s205135
+ */
 public class CommonSteps {
     private static final String BANK_API_KEY = System.getenv("BANK_API_KEY");
+    // Unique suffix per test run to avoid "Account already exists" errors
+    private static final String RUN_ID = String.valueOf(System.currentTimeMillis() % 100000);
 
     private final SharedState state;
     private final CustomerService customerService = new CustomerService();
@@ -25,6 +30,17 @@ public class CommonSteps {
 
     public CommonSteps(SharedState state) {
         this.state = state;
+    }
+
+    /**
+     * Makes a CPR number unique by appending the run ID to avoid conflicts with existing bank accounts
+     */
+    private String makeUniqueCpr(String baseCpr) {
+        // Replace last 4 digits with run ID to keep format valid
+        if (baseCpr.length() >= 4) {
+            return baseCpr.substring(0, baseCpr.length() - 4) + RUN_ID.substring(0, Math.min(4, RUN_ID.length()));
+        }
+        return baseCpr + RUN_ID;
     }
 
     public String registerAccount(String firstName, String lastName, String cprNumber, String initialBalance) throws BankServiceException_Exception {
@@ -60,7 +76,7 @@ public class CommonSteps {
 
     @Given("a customer with name {string}, last name {string}, and CPR {string}")
     public void aCustomerWithNameLastNameAndCPR(String firstName, String lastName, String cprNumber) {
-        state.customer = new Customer(null, firstName, lastName, cprNumber, null);
+        state.customer = new Customer(null, firstName, lastName, makeUniqueCpr(cprNumber), null);
     }
 
     @Given("the customer is registered with the bank with an initial balance of {string} kr")
@@ -81,7 +97,7 @@ public class CommonSteps {
 
     @Given("a merchant with name {string}, last name {string}, and CPR {string}")
     public void aMerchantWithNameLastNameAndCPR(String firstName, String lastName, String cprNumber) {
-        state.merchant = new Merchant(null, firstName, lastName, cprNumber, null);
+        state.merchant = new Merchant(null, firstName, lastName, makeUniqueCpr(cprNumber), null);
     }
 
     @Given("the merchant is registered with the bank with an initial balance of {string} kr")

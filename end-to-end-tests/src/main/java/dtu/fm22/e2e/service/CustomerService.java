@@ -10,6 +10,9 @@ import jakarta.ws.rs.core.GenericType;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * @author s205135, s200718, s215206
+ */
 public class CustomerService {
     private final String baseUrl;
 

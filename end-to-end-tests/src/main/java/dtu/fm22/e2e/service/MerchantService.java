@@ -9,6 +9,9 @@ import jakarta.ws.rs.core.GenericType;
 
 import java.util.Collection;
 
+/**
+ * @author s200718, s215206, s205135
+ */
 public class MerchantService {
     private final String baseUrl;
 

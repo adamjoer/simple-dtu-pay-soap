@@ -7,6 +7,9 @@ import io.cucumber.java.en.When;
 
 import static org.junit.Assert.*;
 
+/**
+ * @author s200718, s215206
+ */
 public class TokenServiceSteps {
 
     private final SharedState state;

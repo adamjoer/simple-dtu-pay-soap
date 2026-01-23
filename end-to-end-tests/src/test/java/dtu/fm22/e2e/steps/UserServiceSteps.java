@@ -12,6 +12,9 @@ import java.util.UUID;
 
 import static org.junit.Assert.*;
 
+/**
+ * @author s205135, s200718, s215206
+ */
 public class UserServiceSteps {
 
     private final SharedState state;

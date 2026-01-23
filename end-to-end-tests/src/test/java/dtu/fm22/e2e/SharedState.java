@@ -8,6 +8,9 @@ import dtu.ws.fastmoney.BankService_Service;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author s205135, s200718, s215206
+ */
 public class SharedState {
     public Customer customer;
     public Merchant merchant;

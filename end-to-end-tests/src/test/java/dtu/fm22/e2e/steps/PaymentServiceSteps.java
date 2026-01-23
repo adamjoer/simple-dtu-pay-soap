@@ -10,6 +10,9 @@ import java.util.UUID;
 
 import static org.junit.Assert.*;
 
+/**
+ * @author s205135, s200718, s215206
+ */
 public class PaymentServiceSteps {
     private final SharedState state;
     private final PaymentService paymentService = new PaymentService();

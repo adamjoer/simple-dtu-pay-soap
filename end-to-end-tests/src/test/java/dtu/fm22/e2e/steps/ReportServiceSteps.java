@@ -13,6 +13,9 @@ import java.util.Collection;
 
 import static org.junit.Assert.*;
 
+/**
+ * @author s215206, s205135, s200718
+ */
 public class ReportServiceSteps {
 
     private final SharedState state;
