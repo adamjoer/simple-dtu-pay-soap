@@ -32,7 +32,7 @@ Feature: Payment with Token Service
     And the balance of the merchant at the bank is "650" kr
 
   Scenario: Customer requests more tokens after using some
-    Given a customer with name "Charlie", last name "Brown", and CPR "696969-6969"
+    Given a customer with name "Charlie", last name "Brown", and CPR "849034-3575"
     And the customer is registered with the bank with an initial balance of "5000" kr
     And the customer is registered with Simple DTU Pay using their bank account
     And the customer has 2 unused tokens
@@ -48,7 +48,7 @@ Feature: Payment with Token Service
     Then the customer has 6 unused tokens left
 
   Scenario: Payment fails with unknown merchant
-    Given a customer with name "Test", last name "Customer", and CPR "443444-4344"
+    Given a customer with name "Test", last name "Customer", and CPR "432362-5635"
     And the customer is registered with the bank with an initial balance of "1000" kr
     And the customer is registered with Simple DTU Pay using their bank account
     And the customer has 1 unused tokens
@@ -58,15 +58,15 @@ Feature: Payment with Token Service
     And the balance of the customer at the bank is "1000" kr
 
   Scenario: Payment fails due to insufficient funds
-    Given a customer with name "Broke", last name "Customer", and CPR "555523-2355"
+    Given a customer with name "Broke", last name "Customer", and CPR "63416374-2234"
     And the customer is registered with the bank with an initial balance of "50" kr
     And the customer is registered with Simple DTU Pay using their bank account
     And the customer has 1 unused tokens
-    And a merchant with name "Rich", last name "Merchant", and CPR "666666-6666"
+    And a merchant with name "Rich", last name "Merchant", and CPR "533809-6545"
     And the merchant is registered with the bank with an initial balance of "1000" kr
     And the merchant is registered with Simple DTU Pay using their bank account
     When the customer initiates a payment for "100" kr using a token
     Then the payment fails
-    And the error message contains "balance"
+    And the error message contains "Debtor balance will be negative"
     And the balance of the customer at the bank is "50" kr
     And the balance of the merchant at the bank is "1000" kr

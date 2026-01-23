@@ -27,7 +27,7 @@ Feature: User management
     Then an error message "Merchant not found" is returned
 
   Scenario: Customer deregistration
-    Given a customer with name "ToDelete", last name "Customer", and CPR "777777-7777"
+    Given a customer with name "ToDelete", last name "Customer", and CPR "374063-6950"
     And the customer is registered with the bank with an initial balance of "1000" kr
     And the customer is registered with Simple DTU Pay using their bank account
     When the customer deregisters from Simple DTU Pay
@@ -35,7 +35,7 @@ Feature: User management
     And the customer profile is no longer accessible
 
   Scenario: Merchant deregistration
-    Given a merchant with name "ToDelete", last name "Merchant", and CPR "888888-8888"
+    Given a merchant with name "ToDelete", last name "Merchant", and CPR "648521-6394"
     And the merchant is registered with the bank with an initial balance of "1000" kr
     And the merchant is registered with Simple DTU Pay using their bank account
     When the merchant deregisters from Simple DTU Pay

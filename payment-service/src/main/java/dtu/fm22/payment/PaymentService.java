@@ -42,7 +42,7 @@ public class PaymentService {
         this.queue.addHandler(TopicNames.TRANSACTION_REQUESTED, this::handleTransactionRequested);
         this.queue.addHandler(TopicNames.CUSTOMER_REPORT_REQUESTED, this::handleCustomerReportRequested);
         this.queue.addHandler(TopicNames.MERCHANT_REPORT_REQUESTED, this::handleMerchantReportRequested);
-        this.queue.addHandler(TopicNames.MANAGER_REPORT_PROVIDED, this::handleManagerReportProvided);
+        this.queue.addHandler(TopicNames.MANAGER_REPORT_REQUESTED, this::handleManagerReportRequested);
     }
 
     /**
@@ -214,7 +214,7 @@ public class PaymentService {
     /**
      * @author s200718, s205135
      */
-    public void handleManagerReportProvided(Event event) {
+    public void handleManagerReportRequested(Event event) {
         var correlationId = event.getArgument(0, UUID.class);
         var allPayments = payments
                 .values()

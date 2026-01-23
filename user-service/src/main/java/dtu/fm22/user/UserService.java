@@ -171,7 +171,7 @@ public class UserService {
 
         var customer = getByCustomerId(paymentInfoRequest.customerId());
         if (customer.isEmpty()) {
-            var errorResponse = new RabbitMqResponse<Customer>(404, "Customer with ID " + paymentInfoRequest.customerId() + " not found");
+            var errorResponse = new RabbitMqResponse<Customer>(404, "Customer not found");
             var errorEvent = new Event(TopicNames.PAYMENT_INFO_PROVIDED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;
@@ -179,7 +179,7 @@ public class UserService {
 
         var merchant = getMerchantById(paymentInfoRequest.merchantId());
         if (merchant.isEmpty()) {
-            var errorResponse = new RabbitMqResponse<Merchant>(404, "Merchant with ID " + paymentInfoRequest.merchantId() + " not found");
+            var errorResponse = new RabbitMqResponse<Merchant>(404, "Merchant not found");
             var errorEvent = new Event(TopicNames.PAYMENT_INFO_PROVIDED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;

@@ -40,7 +40,7 @@ Feature: Token Management
     And the balance of the merchant at the bank is "800" kr
 
   Scenario: Token request denied when customer has more than 1 unused token
-    Given a customer with name "Test", last name "User", and CPR "111111-1111"
+    Given a customer with name "Test", last name "User", and CPR "462348-3684"
     And the customer is registered with the bank with an initial balance of "1000" kr
     And the customer is registered with Simple DTU Pay using their bank account
     And the customer has 3 unused tokens
@@ -49,16 +49,8 @@ Feature: Token Management
     And the customer has 3 unused tokens left
 
   Scenario: Token request denied when requesting more than 5 tokens
-    Given a customer with name "Test", last name "User", and CPR "222222-2222"
+    Given a customer with name "Test", last name "User", and CPR "238235-6932"
     And the customer is registered with the bank with an initial balance of "1000" kr
     And the customer is registered with Simple DTU Pay using their bank account
-    When the customer requests 6 tokens
-    Then the token request fails with error containing "between 1 and 5"
-
-  Scenario: Token request denied when it would exceed maximum 6 unused tokens
-    Given a customer with name "Test", last name "User", and CPR "333333-3333"
-    And the customer is registered with the bank with an initial balance of "1000" kr
-    And the customer is registered with Simple DTU Pay using their bank account
-    And the customer has 1 unused tokens
     When the customer requests 6 tokens
     Then the token request fails with error containing "between 1 and 5"

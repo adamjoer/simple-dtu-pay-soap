@@ -40,6 +40,9 @@ public class PaymentService {
     public Collection<Payment> getAllPayments() {
         try (var client = ClientBuilder.newClient()) {
             try (var response = client.target(baseUrl).path("reports").request().get()) {
+                if (response.getStatus() != 200) {
+                    throw new RuntimeException(response.readEntity(String.class));
+                }
                 return response.readEntity(new GenericType<>() {
                 });
             }
