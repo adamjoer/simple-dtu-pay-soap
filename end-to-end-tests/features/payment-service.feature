@@ -48,7 +48,7 @@ Feature: Payment with Token Service
     Then the customer has 6 unused tokens left
 
   Scenario: Payment fails with unknown merchant
-    Given a customer with name "Test", last name "Customer", and CPR "444444-4444"
+    Given a customer with name "Test", last name "Customer", and CPR "443444-4344"
     And the customer is registered with the bank with an initial balance of "1000" kr
     And the customer is registered with Simple DTU Pay using their bank account
     And the customer has 1 unused tokens
@@ -58,7 +58,7 @@ Feature: Payment with Token Service
     And the balance of the customer at the bank is "1000" kr
 
   Scenario: Payment fails due to insufficient funds
-    Given a customer with name "Broke", last name "Customer", and CPR "555555-5555"
+    Given a customer with name "Broke", last name "Customer", and CPR "555523-2355"
     And the customer is registered with the bank with an initial balance of "50" kr
     And the customer is registered with Simple DTU Pay using their bank account
     And the customer has 1 unused tokens
