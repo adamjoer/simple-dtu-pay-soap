@@ -13,9 +13,6 @@ public class TokenServiceSteps {
 
     private final PaymentService paymentService = new PaymentService();
 
-    private boolean successful = false;
-    private String errorMessage;
-
     public TokenServiceSteps(SharedState state) {
         this.state = state;
     }
@@ -24,20 +21,28 @@ public class TokenServiceSteps {
     public void theCustomerInitiatesAPaymentForKrUsingAnInvalidToken(String amount) {
         var token = "invalid-token";
         try {
-            successful = paymentService.pay(amount, state.merchant.id, token);
+            state.successful = paymentService.pay(amount, state.merchant.id, token);
         } catch (Exception e) {
-            successful = false;
-            errorMessage = e.getMessage();
+            state.successful = false;
+            state.errorMessage = e.getMessage();
         }
     }
 
     @Then("the payment fails")
     public void thePaymentFails() {
-        assertFalse("Expected payment to fail, but it was successful", successful);
+        assertFalse("Expected payment to fail, but it was successful", state.successful);
     }
 
     @Then("the error message is {string}")
     public void theErrorMessageIs(String message) {
-        assertEquals(message, errorMessage);
+        assertNotNull("Error message should not be null", state.errorMessage);
+        assertEquals(message, state.errorMessage);
+    }
+
+    @Then("the error message contains {string}")
+    public void theErrorMessageContains(String expectedMessage) {
+        assertNotNull("Error message should not be null", state.errorMessage);
+        assertTrue("Expected error message to contain '" + expectedMessage + "' but was: " + state.errorMessage,
+                state.errorMessage.toLowerCase().contains(expectedMessage.toLowerCase()));
     }
 }

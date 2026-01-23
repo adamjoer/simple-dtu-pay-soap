@@ -1,21 +1,23 @@
 package dtu.fm22.facade.service;
 
 import com.google.gson.reflect.TypeToken;
+import dtu.fm22.facade.exceptions.ExceptionFactory;
 import dtu.fm22.facade.record.Customer;
 import dtu.fm22.facade.record.TokenRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.WebApplicationException;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
+import messaging.implementations.RabbitMqResponse;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 @ApplicationScoped
 public final class CustomerFacadeService {
@@ -30,7 +32,7 @@ public final class CustomerFacadeService {
         queue.addHandler(TopicNames.CUSTOMER_REGISTRATION_COMPLETED, this::handleCustomerRegistrationCompleted);
         queue.addHandler(TopicNames.CUSTOMER_INFO_PROVIDED, this::handleCustomerInfoProvided);
         queue.addHandler(TopicNames.CUSTOMER_TOKEN_PROVIDED, this::handleTokenProvided);
-        queue.addHandler(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, this::handleTokenReplenishCompleted);
+        queue.addHandler(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, this::handleTokenProvided);
     }
 
     /**
@@ -90,7 +92,15 @@ public final class CustomerFacadeService {
         var event = new Event(TopicNames.CUSTOMER_TOKEN_REQUESTED, customerId, correlationId);
         queue.publish(event);
 
-        return tokenRequestsInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join();
+        try {
+            return tokenRequestsInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join();
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof TimeoutException)
+                throw new InternalServerErrorException("Token retrieval timed out");
+            if (e.getCause() instanceof WebApplicationException)
+                throw (WebApplicationException) e.getCause();
+            throw e;
+        }
     }
 
     public List<String> requestTokens(String customerId, int numberOfTokens) {
@@ -99,34 +109,52 @@ public final class CustomerFacadeService {
         var tokenRequest = new TokenRequest(customerId, numberOfTokens);
         var event = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_REQUESTED, tokenRequest, correlationId);
         queue.publish(event);
-        return tokenRequestsInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join();
+
+        try {
+            return tokenRequestsInProgress.get(correlationId).orTimeout(5, TimeUnit.SECONDS).join();
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof TimeoutException)
+                throw new InternalServerErrorException("Token request timed out");
+            if (e.getCause() instanceof WebApplicationException)
+                throw (WebApplicationException) e.getCause();
+            throw e;
+        }
     }
 
     private void handleTokenProvided(Event event) {
-        var collectionType = new TypeToken<List<String>>() {};
-        List<String> tokens = event.getArgument(0, collectionType);
+        var collectionType = new TypeToken<List<String>>() {
+        };
+        RabbitMqResponse<List<String>> tokensResponse = event.getArgumentWithError(0, collectionType.getType());
         var correlationId = event.getArgument(1, UUID.class);
+
         var future = tokenRequestsInProgress.get(correlationId);
-        if (future != null) {
-            future.complete(tokens);
+        if (future == null) {
+            return;
+        }
+
+        if (tokensResponse.isError()) {
+            future.completeExceptionally(ExceptionFactory.fromRabbitMqResponse(tokensResponse));
+        } else {
+            future.complete(tokensResponse.getData());
         }
     }
 
+/*
     private void handleTokenReplenishCompleted(Event event) {
+        var collectionType = new TypeToken<List<String>>() {
+        };
+        RabbitMqResponse<List<String>> tokensResponse = event.getArgumentWithError(0, collectionType.getType());
         var correlationId = event.getArgument(1, UUID.class);
         var future = tokenRequestsInProgress.get(correlationId);
-        if (future != null) {
-            // Check if it's an error message (String) or success (List<String>)
-            var arg0 = event.getArgument(0, Object.class);
-            if (arg0 instanceof String) {
-                // Error case
-                future.completeExceptionally(new RuntimeException((String) arg0));
-            } else {
-                // Success case - list of tokens
-                var collectionType = new TypeToken<List<String>>() {};
-                List<String> tokens = event.getArgument(0, collectionType);
-                future.complete(tokens);
-            }
+        if (future == null) {
+            return;
+        }
+
+        if (tokensResponse.isError()) {
+            future.completeExceptionally(ExceptionFactory.fromRabbitMqResponse(tokensResponse));
+        } else {
+            future.complete(tokensResponse.getData());
         }
     }
+*/
 }

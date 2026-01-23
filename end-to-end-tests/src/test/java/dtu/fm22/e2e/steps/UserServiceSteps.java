@@ -114,4 +114,59 @@ public class UserServiceSteps {
             success = false;
         }
     }
+
+    @When("the customer deregisters from Simple DTU Pay")
+    public void theCustomerDeregistersFromSimpleDTUPay() {
+        try {
+            customerService.unregister(state.customer);
+            success = true;
+        } catch (Exception e) {
+            errorMessage = e.getMessage();
+            success = false;
+        }
+    }
+
+    @When("the merchant deregisters from Simple DTU Pay")
+    public void theMerchantDeregistersFromSimpleDTUPay() {
+        try {
+            merchantService.unregister(state.merchant);
+            success = true;
+        } catch (Exception e) {
+            errorMessage = e.getMessage();
+            success = false;
+        }
+    }
+
+    @Then("the deregistration is successful")
+    public void theDeregistrationIsSuccessful() {
+        assertTrue("Expected deregistration to be successful", success);
+    }
+
+    @Then("the customer profile is no longer accessible")
+    public void theCustomerProfileIsNoLongerAccessible() {
+        try {
+            customerService.getProfileInformation(state.customer);
+            fail("Expected customer profile to be inaccessible after deregistration");
+        } catch (Exception e) {
+            // Expected - profile should not be accessible
+            assertTrue("Expected 'Customer not found' error but got: " + e.getMessage(),
+                    e.getMessage().contains("Customer not found"));
+        }
+        // Set customer ID to null so teardown doesn't try to unregister again
+        state.customer.id = null;
+    }
+
+    @Then("the merchant profile is no longer accessible")
+    public void theMerchantProfileIsNoLongerAccessible() {
+        try {
+            merchantService.getProfileInformation(state.merchant);
+            fail("Expected merchant profile to be inaccessible after deregistration");
+        } catch (Exception e) {
+            // Expected - profile should not be accessible
+            assertTrue("Expected 'Merchant not found' error but got: " + e.getMessage(),
+                    e.getMessage().contains("Merchant not found"));
+        }
+        // Set merchant ID to null so teardown doesn't try to unregister again
+        state.merchant.id = null;
+    }
 }

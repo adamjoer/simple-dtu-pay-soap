@@ -8,6 +8,9 @@ import jakarta.ws.rs.core.MediaType;
 import java.util.Collection;
 
 @Path("/reports")
+/**
+ * @author s242575
+ */
 public class ManagerResource {
 
     public final ManagerFacadeService managerFacadeService;

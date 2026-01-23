@@ -12,7 +12,11 @@ import java.util.stream.Collectors;
 import messaging.Event;
 import messaging.MessageQueue;
 import messaging.TopicNames;
+import messaging.implementations.RabbitMqResponse;
 
+/**
+ * @author s242576
+ */
 public class TokenService {
 
     private static final int MAX_UNUSED_TOKENS = 6;
@@ -40,6 +44,10 @@ public class TokenService {
     /**
      * Generates a unique, non-guessable token
      */
+
+    /**
+     * @author s242576
+     */
     private String generateToken() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder token = new StringBuilder(TOKEN_LENGTH);
@@ -52,6 +60,10 @@ public class TokenService {
     /**
      * Handles token replenishment request (requesting new tokens)
      */
+
+    /**
+     * @author s242576
+     */
     public void handleTokenReplenishRequested(Event event) {
         var tokenRequest = event.getArgument(0, TokenRequest.class);
         var correlationId = event.getArgument(1, UUID.class);
@@ -62,8 +74,11 @@ public class TokenService {
 
             // Validate request
             if (numberOfTokens < MIN_TOKEN_REQUEST || numberOfTokens > MAX_TOKEN_REQUEST) {
-                var errorMessage = "Invalid number of tokens requested. Must be between " + MIN_TOKEN_REQUEST + " and " + MAX_TOKEN_REQUEST;
-                var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, errorMessage, correlationId);
+                var errorMessage = "Invalid number of tokens requested. Must be between "
+                        + MIN_TOKEN_REQUEST + " and"
+                        + " " + MAX_TOKEN_REQUEST;
+                var errorResponse = new RabbitMqResponse<>(400, errorMessage);
+                var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, errorResponse, correlationId);
                 queue.publish(errorEvent);
                 return;
             }
@@ -76,16 +91,25 @@ public class TokenService {
             // 2. All tokens used (unusedCount == 0)
             // 3. Only one unused token left (unusedCount == 1)
             if (unusedCount > 1) {
-                var errorMessage = "Cannot request tokens. Customer has " + unusedCount + " unused tokens. Can only request when having 0 or 1 unused token.";
-                var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, errorMessage, correlationId);
+                var errorMessage = "Cannot request tokens. Customer has "
+                        + unusedCount
+                        + " unused tokens. Can only "
+                        + "request when having 0 or 1 unused token.";
+                var errorResponse = new RabbitMqResponse<>(400, errorMessage);
+                var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, errorResponse, correlationId);
                 queue.publish(errorEvent);
                 return;
             }
 
             // Check if adding tokens would exceed maximum
             if (unusedCount + numberOfTokens > MAX_UNUSED_TOKENS) {
-                var errorMessage = "Cannot request " + numberOfTokens + " tokens. Would exceed maximum of " + MAX_UNUSED_TOKENS + " unused tokens.";
-                var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, errorMessage, correlationId);
+                var errorMessage = "Cannot request "
+                        + numberOfTokens
+                        + " tokens. Would exceed maximum of "
+                        + MAX_UNUSED_TOKENS
+                        + " unused tokens.";
+                var errorResponse = new RabbitMqResponse<>(400, errorMessage);
+                var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, errorResponse, correlationId);
                 queue.publish(errorEvent);
                 return;
             }
@@ -119,18 +143,28 @@ public class TokenService {
                     .map(Token::tokenValue)
                     .collect(Collectors.toList());
 
-            var successEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, tokenValues, correlationId);
+            var successEvent = new Event(
+                    TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED,
+                    new RabbitMqResponse<>(tokenValues),
+                    correlationId
+            );
             queue.publish(successEvent);
 
         } catch (IllegalArgumentException e) {
             var errorMessage = "Invalid customer ID format: " + tokenRequest.customerId();
-            var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, errorMessage, correlationId);
+            var errorResponse = new RabbitMqResponse<>(400, errorMessage);
+            var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_REPLENISH_COMPLETED, errorResponse, correlationId);
             queue.publish(errorEvent);
         }
     }
 
     /**
      * Handles token request (get existing unused tokens)
+     */
+
+
+    /**
+     * @author s242576
      */
     public void handleTokenRequested(Event event) {
         System.out.format("TokenService: Received CUSTOMER_TOKEN_REQUESTED event: %s%n", event);
@@ -145,14 +179,16 @@ public class TokenService {
                     .map(Token::tokenValue)
                     .collect(Collectors.toList());
 
-            var tokenProvidedEvent = new Event(TopicNames.CUSTOMER_TOKEN_PROVIDED, tokenValues, correlationId);
+            var tokenProvidedEvent = new Event(
+                    TopicNames.CUSTOMER_TOKEN_PROVIDED,
+                    new RabbitMqResponse<>(tokenValues),
+                    correlationId
+            );
             queue.publish(tokenProvidedEvent);
 
         } catch (Exception e) {
-            System.err.format("TokenService: Error handling CUSTOMER_TOKEN_REQUESTED for customerId %s: %s%n", customerIdStr, e.getMessage());
-            var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_PROVIDED,
-                    Collections.emptyList(),
-                    correlationId);
+            var errorResponse = new RabbitMqResponse<>(400, "Invalid customer ID format: " + customerIdStr);
+            var errorEvent = new Event(TopicNames.CUSTOMER_TOKEN_PROVIDED, errorResponse, correlationId);
             queue.publish(errorEvent);
         }
     }
@@ -160,6 +196,10 @@ public class TokenService {
     /**
      * Handles token validation request (check if token is valid)
      * Returns the customerId associated with the token in the response
+     */
+
+    /**
+     * @author s242576
      */
     public void handleTokenValidationRequested(Event event) {
         var validationRequest = event.getArgument(0, TokenValidationRequest.class);
@@ -170,29 +210,32 @@ public class TokenService {
 
         if (token == null) {
             // Token doesn't exist
-            var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                    false, (String) null, "Token not found", correlationId);
+            var errorResponse = new RabbitMqResponse<>(404, "Token not found");
+            var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;
         }
 
         if (token.used()) {
             // Token already used
-            var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                    false, (String) null, "Token has already been used", correlationId);
+            var errorResponse = new RabbitMqResponse<>(400, "Token has already been used");
+            var errorEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;
         }
 
         // Token is valid - return the customerId associated with the token
-        var customerId = token.customerId().toString();
-        var successEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED,
-                true, customerId, "Token is valid", correlationId);
+        var successResponse = new RabbitMqResponse<>(token);
+        var successEvent = new Event(TopicNames.TOKEN_VALIDATION_PROVIDED, successResponse, correlationId);
         queue.publish(successEvent);
     }
 
     /**
      * Handles request to mark a token as used
+     */
+
+    /**
+     * @author s242576
      */
     public void handleTokenMarkUsedRequested(Event event) {
         var tokenValue = event.getArgument(0, String.class);
@@ -200,15 +243,15 @@ public class TokenService {
 
         var token = tokenLookup.get(tokenValue);
         if (token == null) {
-            var errorEvent = new Event(TopicNames.TOKEN_MARK_USED_COMPLETED,
-                    false, "Token not found", correlationId);
+            var errorResponse = new RabbitMqResponse<>(404, "Token not found");
+            var errorEvent = new Event(TopicNames.TOKEN_MARK_USED_COMPLETED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;
         }
 
         if (token.used()) {
-            var errorEvent = new Event(TopicNames.TOKEN_MARK_USED_COMPLETED,
-                    false, "Token already marked as used", correlationId);
+            var errorResponse = new RabbitMqResponse<>(400, "Token already marked as used");
+            var errorEvent = new Event(TopicNames.TOKEN_MARK_USED_COMPLETED, errorResponse, correlationId);
             queue.publish(errorEvent);
             return;
         }
@@ -224,8 +267,11 @@ public class TokenService {
             return tokens;
         });
 
-        var successEvent = new Event(TopicNames.TOKEN_MARK_USED_COMPLETED,
-                true, "Token marked as used", correlationId);
+        var successEvent = new Event(
+                TopicNames.TOKEN_MARK_USED_COMPLETED,
+                new RabbitMqResponse<>(true),
+                correlationId
+        );
         queue.publish(successEvent);
     }
 

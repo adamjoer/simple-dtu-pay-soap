@@ -127,9 +127,24 @@ public class CommonSteps {
     @When("the customer requests {int} tokens")
     public void theCustomerRequestsTokens(Integer numberOfTokens) {
         try {
-            state.tokens = customerService.requestMoreTokens(state.customer, numberOfTokens);
+            var newTokens = customerService.requestMoreTokens(state.customer, numberOfTokens);
+            if (state.tokens == null) {
+                state.tokens = newTokens;
+            } else {
+                state.tokens.addAll(newTokens);
+            }
+            state.successful = true;
         } catch (Exception e) {
-            fail("Failed to request tokens: " + e.getMessage());
+            state.successful = false;
+            state.errorMessage = e.getMessage();
         }
+    }
+
+    @Then("the token request fails with error containing {string}")
+    public void theTokenRequestFailsWithErrorContaining(String expectedMessage) {
+        assertFalse("Expected token request to fail, but it succeeded", state.successful);
+        assertNotNull("Error message should not be null", state.errorMessage);
+        assertTrue("Expected error message to contain '" + expectedMessage + "' but was: " + state.errorMessage,
+                state.errorMessage.toLowerCase().contains(expectedMessage.toLowerCase()));
     }
 }
